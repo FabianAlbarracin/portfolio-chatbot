@@ -1,0 +1,19 @@
+# --- SEGURIDAD (CRÍTICO) ---
+# Jamás subir claves API
+.env
+
+# --- ENTORNO VIRTUAL ---
+# No subir librerías instaladas (pesan mucho y son específicas de tu PC)
+venv/
+env/
+
+# --- PYTHON ---
+# Archivos compilados temporales que no sirven
+__pycache__/
+*.pyc
+
+# --- IDE Y SISTEMA ---
+# Configuraciones locales de tu editor o sistema
+.vscode/
+.idea/
+.DS_Store
