@@ -1,2 +1,13 @@
-google-generativeai
+google-genai
 python-dotenv
+# --- Núcleo RAG ---
+langchain
+langchain-community
+langchain-huggingface
+langchain-groq
+chromadb
+sentence-transformers
+
+# --- Utilidades de Texto ---
+# Necesario para tokenizar correctamente (contar tokens)
+tiktoken

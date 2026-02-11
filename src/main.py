@@ -1,36 +1,53 @@
 import os
+import sys
 from dotenv import load_dotenv
-from config_loader import ResourceLoader
-from llm_engine import GeminiEngine
+from llm_engine import ChatbotRAG
 
-# Cargar variables de entorno (.env)
+# Cargar variables de entorno
 load_dotenv()
 
 def main():
-    # 1. Configuración
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        print("ERROR: No se encontró la GEMINI_API_KEY en el archivo .env")
+    print("--------------------------------------------------")
+    print("🤖 Chatbot RAG de Portafolio (Router Activado) - Iniciando...")
+    print("--------------------------------------------------")
+
+    # Verificar API Key
+    if not os.getenv("GROQ_API_KEY"):
+        print("❌ Error: No se encontró GROQ_API_KEY en las variables de entorno.")
+        print("   Asegúrate de tener el archivo .env configurado correctamente.")
         return
 
-    # 2. Inicializar clases
-    print("Iniciando sistema...")
-    loader = ResourceLoader()
-    bot = GeminiEngine(api_key)
+    try:
+        # Instanciar el motor (Esto carga la DB en memoria, el LLM y el Router)
+        bot = ChatbotRAG()
+    except Exception as e:
+        print(f"❌ Error crítico iniciando el bot: {e}")
+        return
 
-    # 3. Cargar memoria (Solo se hace una vez al inicio)
-    instrucciones = loader.get_system_instructions()
-    contexto = loader.get_context()
-    print("Sistema cargado. Escribe 'salir' para terminar.\n")
+    print("\n💬 Sistema listo. Escribe 'salir' para terminar.")
+    print("--------------------------------------------------")
 
-    # 4. Bucle de chat
     while True:
-        pregunta = input("\nTú: ")
-        if pregunta.lower() in ['salir', 'exit']:
+        try:
+            user_input = input("\nTú: ").strip()
+            
+            if user_input.lower() in ['salir', 'exit', 'quit']:
+                print("👋 ¡Hasta luego!")
+                break
+            
+            if not user_input:
+                continue
+
+            # Obtener respuesta del motor (El método get_response ahora tiene el Router integrado)
+            response = bot.get_response(user_input)
+            
+            print(f"\nBot: {response}")
+
+        except KeyboardInterrupt:
+            print("\n👋 Salida forzada.")
             break
-        
-        respuesta = bot.generate_response(instrucciones, contexto, pregunta)
-        print(f"Bot: {respuesta}")
+        except Exception as e:
+            print(f"❌ Error en la conversación: {e}")
 
 if __name__ == "__main__":
     main()

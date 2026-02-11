@@ -1,19 +1,37 @@
-# --- SEGURIDAD (CRÍTICO) ---
-# Jamás subir claves API
+# =========================
+# SECRETOS Y CONFIGURACIÓN
+# =========================
 .env
+secretos/
+*.pem
+*.key
 
-# --- ENTORNO VIRTUAL ---
-# No subir librerías instaladas (pesan mucho y son específicas de tu PC)
+# =========================
+# BASES DE DATOS VECTORIALES Y DATOS LOCALES
+# =========================
+# No subas ChromaDB, pesa mucho y los embeddings se pueden regenerar
+data/chroma_db/
+*.sqlite3
+*.db
+*.log
+
+# =========================
+# CACHÉ DE PYTHON
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# =========================
+# ENTORNOS VIRTUALES (Si usas alguno fuera de Docker)
+# =========================
 venv/
 env/
+.venv/
 
-# --- PYTHON ---
-# Archivos compilados temporales que no sirven
-__pycache__/
-*.pyc
-
-# --- IDE Y SISTEMA ---
-# Configuraciones locales de tu editor o sistema
-.vscode/
-.idea/
+# =========================
+# ARCHIVOS DEL SISTEMA OPERATIVO
+# =========================
 .DS_Store
+Thumbs.db

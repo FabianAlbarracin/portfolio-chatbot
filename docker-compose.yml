@@ -1,0 +1,18 @@
+services:
+  chatbot:
+    build: .
+    container_name: chatbot_portfolio
+    restart: unless-stopped
+    ports:
+      - "5050:5000"
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./data:/app/data
+      - ./.env:/app/.env
+    environment:
+      - PYTHONUNBUFFERED=1
+    # --- CAMBIO AQUÍ ---
+    # En lugar de correr python src/main.py, le decimos que no haga nada.
+    # Esto mantiene el contenedor encendido (Up) para que podamos entrar.
+    command: tail -f /dev/null
