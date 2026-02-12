@@ -1,58 +1,91 @@
-# Trayectoria Académica, Certificaciones y Stack Técnico: Fabián Albarracín
+# HISTORIAL ACADÉMICO COMPLETO: FABIÁN ALBARRACÍN
 
-Este documento constituye la Fuente Única de Verdad sobre la formación profesional de Fabián Albarracín, integrando educación formal, certificaciones de industria y habilidades técnicas.
+* La trayectoria de Fabián comenzó en 2020 con fundamentos de lógica y desarrollo web, antes de iniciar su formación profesional en 2022 en el Politécnico Internacional
 
----
+## 1. EDUCACIÓN FORMAL (TÍTULO PRINCIPAL)
+* **Título:** Tecnólogo en Desarrollo de Software y Aplicativos Móviles.
+* **Institución:** Politécnico Internacional.
+* **Periodo:** 2022 - 2024 (Finalizado).
+* **Competencias Core:** Ciclo de vida del software (SDLC), Java, C#, SQL, Arquitectura de Software, QA, Redes y Ciberseguridad.
 
-## 1. Educación Formal Superior (Título Principal)
-**Contexto: Formación Académica de Fabián Albarracín en el Politécnico Internacional.**
+## 2. FORMACIÓN EN IA, BIG DATA Y CIENCIA DE DATOS
+* **Curso: Bootcamp Inteligencia Artificial - Explorador (2025)**
+  - Entidad: Talento Tech TIC (Ministerio TIC Colombia).
+  - Duración: 159 horas (Finalizado el 5 de diciembre, 2025).
+  - Temas: Machine Learning, Redes Neuronales, Agentes Inteligentes, Lógica Difusa.
+* **Curso: Elements of AI (2020)**
+  - Entidad: University of Helsinki (Finlandia).
+  - Créditos: 2 ECTS Credits.
+  - Temas: Fundamentos de IA, Machine Learning y Ética.
+* **Diplomado: Analítica de Datos y Big Data (2023)**
+  - Entidad: Politécnico Internacional.
+  - Duración: 50 horas.
+  - Temas: Procesamiento de grandes volúmenes de datos y visualización estratégica.
+* **Curso: Big Data Analytics: Opportunities, Challenges and the Future (2020)**
+  - Entidad: Griffith University (FutureLearn).
+  - Duración: 8 horas.
 
-* **Título Obtenido:** Tecnólogo en Desarrollo de Software y Aplicativos Móviles.
-* **Institución:** Politécnico Internacional, Bogotá.
-* **Periodo Académico:** 2022 - 2024 (Finalizado).
-* **Excelencia Académica:** Promedio sobresaliente de **4.77 / 5.0**.
-* **Competencias de Ingeniería:** Formación integral en el Ciclo de Vida del Software (SDLC), desde análisis de requisitos hasta despliegue y QA.
-* **Especialización Curricular:** Inteligencia Artificial, Internet de las Cosas (IoT), Big Data, Estructuras de Datos y POO.
+## 2.1 EXPERTO EN BASES DE DATOS Y ARQUITECTURA DE DATOS
 
----
+### Formación Especializada
+* **Diplomado: Analítica de Datos y Big Data (2023):** Formación de 50 horas en el Politécnico Internacional enfocada en el procesamiento de grandes volúmenes de datos y visualización estratégica.
+* **Certificación: Fundamentos de Bases de Datos (2024):** Certificado por Platzi (26 horas). Dominio avanzado de lenguaje **SQL**, normalización de bases de datos (1FN, 2FN, 3FN), Modelo Entidad-Relación y diseño de bases de datos relacionales.
+* **Curso: Java SE Orientado a Objetos (2023):** Aplicación de persistencia de datos y lógica de backend.
 
-## 2. Certificaciones de Industria y Formación Avanzada
-**Contexto: Credenciales profesionales y Bootcamps de especialización de Fabián Albarracín.**
+### Implementación en Proyectos Reales
+* **Proyecto TradeHUB:** Implementación de un modelo de datos relacional con normalización hasta 3FN, garantizando la integridad referencial y trazabilidad absoluta mediante UID para inventarios internacionales.
+* **Sistema Experimental de Telemetría:** Uso de **SQLite** con modo `WAL` (Write-Ahead Logging) para permitir lecturas y escrituras concurrentes de alta velocidad en un entorno IoT.  
 
-* **Appian Certified Associate Developer:** Certificación oficial de Appian (Septiembre 2024) para desarrollo Low-Code, diseño de interfaces SAIL y automatización de procesos BPMN.
-* **IA Explorador (Bootcamp 159 Horas):** Formación intensiva del Ministerio TIC / Talento Tech (Diciembre 2025) en Agentes Inteligentes, Machine Learning y Redes Neuronales.
-* **Analítica de Datos y Big Data (Diplomado):** Formación de 50 horas en el Politécnico Internacional (Octubre 2023) sobre procesamiento estadístico de grandes volúmenes de datos.
-* **Scrum Fundamentals Certified (SFC™):** Certificación global de SCRUMstudy (Agosto 2023) en gestión ágil de proyectos y roles de Scrum.
-* **Microsoft Office Specialist (MOS) Excel:** Certificación profesional en manejo avanzado de datos y automatización de reportes.
-* **Elements of AI:** Curso de la University of Helsinki (2020) sobre fundamentos teóricos de Inteligencia Artificial.
+## 3. DESARROLLO BACKEND, BASES DE DATOS Y LÓGICA
+* **Curso: Fundamentos de Bases de Datos (2024)**
+  - Entidad: Platzi. Duración: 26 horas. (SQL, Normalización, Entidad-Relación).
+* **Curso: Java SE Orientado a Objetos (2023)**
+  - Entidad: Platzi. Duración: 16 horas. (Pilares POO, Herencia, Polimorfismo).
+* **Curso: Básico de Programación con C# (2023)**
+  - Entidad: Platzi. Duración: 12 horas. (Ecosistema .NET).
+* **Curso: Metodología de la Programación de Sistemas (2021)**
+  - Entidad: SENA. Duración: 40 horas. (Algoritmos y Diagramas de flujo).
+* **Curso: Closures y Scope en JavaScript (2020)**
+  - Entidad: Platzi. Duración: 13 horas. (Hoisting y optimización de memoria).
+* **Curso: Programación Básica (2020)**
+  - Entidad: Platzi. Duración: 49 horas totales (Dos certificaciones de 34h y 15h).
 
----
+## 4. DESARROLLO WEB, MÓVIL, LOW-CODE (APPIAN)
 
-## 3. Stack Tecnológico y Formación Continua (Hard Skills)
-**Contexto: Habilidades técnicas prácticas desarrolladas por Fabián Albarracín en plataformas como Platzi y Google.**
+### Certificación: Appian Developer (2024)
+* **Entidad:** Appian (Inglés).
+* **Descripción:** Formación inicial y avanzada en el ecosistema Low-Code de Appian, orientada a la creación rápida de aplicaciones empresariales y automatización de flujos de trabajo.
 
-### A. Backend y Lenguajes de Programación
-* **Python:** Lenguaje principal para lógica de negocio, bots y proyectos de Inteligencia Artificial.
-* **Java SE:** Formación avanzada en Programación Orientada a Objetos (Herencia, Polimorfismo, Abstracción).
-* **C# (.NET):** Fundamentos de lógica de programación y ecosistema .NET.
-* **Bases de Datos:** Diseño SQL, Modelo Entidad-Relación y normalización de datos.
-* **Automatización:** Desarrollo de Chatbots utilizando la API oficial de Meta (WhatsApp Business) y Webhooks.
+### Certificación: Appian Developer (2023)
+* **Entidad:** Appian (Español).
+* **Descripción:** Formación inicial y avanzada en el ecosistema Low-Code de Appian, orientada a la creación rápida de aplicaciones empresariales y automatización de flujos de trabajo.
 
-### B. Infraestructura, IoT y Herramientas de Ingeniería
-* **Internet de las Cosas (IoT):** Construcción de estaciones terrenas para satélites (PlatziSat-1) utilizando LoRa, telemetría y microcontroladores ESP32.
-* **Control de Versiones:** Manejo profesional de Git y GitHub (Gitflow, Pull Requests, resolución de conflictos).
-* **DevOps Básico:** Gestión de servidores Linux, despliegue de aplicaciones y seguridad web.
+* **Curso: Creación de Chatbot con API WhatsApp (2024)**
+  - Entidad: Platzi. (Webhooks, Meta Developers, Integración IA).
+* **Curso: Desarrollo de Apps Móviles (2020)**
+  - Entidad: Google Actívate / Universidad Complutense de Madrid. Duración: 40 horas.
+* **Curso: Análisis para Desarrollo Móvil App Inventor (2020)**
+  - Entidad: SENA. Duración: 40 horas.
+* **Cursos: Introducción al Desarrollo Web 1 y 2 (2020-2021)**
+  - Entidad: Google Actívate / Universidad de Alicante. Duración: 80 horas totales. (HTML5, CSS3, Responsive Design).
+* **Curso: Práctico de WordPress (2024)**
+  - Entidad: Platzi. Duración: 15 horas. (Gestión de CMS, Plugins y SEO).
 
-### C. Frontend, Móvil y CMS
-* **JavaScript Avanzado:** Conocimientos en Closures, Scope y gestión de memoria en motores V8.
-* **Desarrollo Web:** Estándares HTML5, CSS3 y Diseño Responsivo (Universidad de Alicante / Google).
-* **CMS WordPress:** Gestión profesional de temas, plugins, seguridad y despliegue.
-* **Desarrollo Móvil:** Arquitectura de aplicaciones móviles (Google / Universidad Complutense / SENA).
+## 5. INFRAESTRUCTURA, IOT Y HARDWARE
+* **Curso: Comunicación con Satélites: Estación Terrestre (2023)**
+  - Entidad: Platzi. Duración: 9 horas. (Hardware ESP32, Protocolo LoRa, Telemetría satelital).
+  - Fabián tiene formación técnica en Hardware, específicamente en el ensamblaje de estaciones terrestres con ESP32 y LoRa
+* **Curso: IoT: Programación de Microcontroladores ESP32 (2023)**
+  - Entidad: Platzi. (Arquitectura de chips, Sensores, Wi-Fi y Bluetooth).
 
----
-
-## 4. Habilidades Blandas e Inglés Técnico
-**Contexto: Competencias transversales de Fabián Albarracín para entornos laborales.**
-
-* **Inglés para Programadores:** Vocabulario técnico, lectura de documentación oficial y preparación de entrevistas técnicas.
-* **Soft Skills:** Inteligencia emocional, comunicación asertiva, gestión del tiempo y liderazgo colaborativo en equipos de desarrollo.
+## 6. HERRAMIENTAS, METODOLOGÍAS E IDIOMAS
+* **Certificación: Microsoft Office Specialist (MOS) Excel (2023)**
+  - Entidad: Politécnico Internacional / Microsoft.
+* **Certificación: Scrum Fundamentals Certified (2023)**
+  - Entidad: ScrumStudy (SBOK Guide).
+* **Curso: Profesional de Git y GitHub (2024)**
+  - Entidad: Platzi. Duración: 22 horas. (Control de versiones avanzado).
+* **Curso: Inglés para Programadores (2023)**
+  - Entidad: Platzi. (Vocabulario técnico y entrevistas).
+* **Curso: Habilidades Blandas para Desarrollo (2024)**
+  - Entidad: Platzi. Duración: 8 horas. (Inteligencia emocional y liderazgo).

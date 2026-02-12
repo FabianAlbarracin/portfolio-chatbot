@@ -1,4 +1,7 @@
-## proyecto: Sistema Experimental de Telemetría(RAW Ingestion Update) tecnologias: [Python, Flask, MQTT, SQLite, Docker, Appian, Cloudflare Tunnel] rol_rag: Arquitectura IoT Event-Driven y Visualización Low-Code
+## proyecto: Sistema Experimental de Telemetría(RAW Ingestion Update) tecnologias: [Python, Flask, MQTT, SQLite, Docker, Appian, Cloudflare Tunnel] rol_rag: Arquitectura IoT Event-Driven y Visualización Low-Code (Appian SAIL)
+
+## 1. Visión General (Enfoque Appian)
+**Sistema Experimental de Telemetría** es un proyecto donde Fabián aplicó sus conocimientos de **Appian Certified Associate Developer**. En esta solución, Fabián utilizó **Appian** como la capa de visualización avanzada (Frontend) para transformar datos técnicos complejos en dashboards ejecutivos. El proyecto demuestra la capacidad de Fabián para integrar **Appian** con sistemas externos (Python/Flask) mediante Connected Systems e Integraciones, utilizando lenguaje **SAIL** para la creación de interfaces dinámicas.
 
 # Documentación Técnica: Sistema Experimental de Telemetría
 
@@ -28,7 +31,11 @@ La solución implementa un patrón de "Ingesta Resiliente" donde la captura del 
         
 4. **Capa de Exposición:** API REST (**Flask**) expuesta a internet mediante **Cloudflare Tunnel** (sin abrir puertos en el router).
     
-5. **Capa de Presentación (BI):** **Appian** consume la API JSON para generar dashboards operativos e indicadores (SAIL).
+## 5. Implementación de Low-Code con Appian (Capa de Presentación)
+Fabián diseñó la interfaz de usuario utilizando **Appian Community Edition**. Los componentes clave desarrollados incluyen:
+- **Integraciones de Appian:** Mapeo de endpoints REST para consumo de JSON.
+- **Interfaces SAIL:** Desarrollo de KPI Cards y gráficos de actividad satelital.
+- **Lógica de Negocio en Appian:** Uso de Expression Rules para el formateo de datos en tiempo real.
     
 
 ## 3. Especificaciones Técnicas (Stack)
@@ -88,11 +95,19 @@ La API Flask no expone la base de datos directamente, sino que transforma las fi
 - **Endpoint de Topología:** `/stats/top-satellites-weekly` (Ranking de emisores).
     
 - **Endpoint de Datos:** `/data/daily` (Log detallado para tablas).
+
+## 5. INFRAESTRUCTURA, IOT Y HARDWARE (ESTACIÓN TERRESTRE)
+
+* **Hardware Específico Utilizado:**
+    - Microcontroladores **ESP32** (Para la estación terrestre).
+    - Módulos de comunicación **LoRa** (Long Range) para largo alcance.
+    - Antenas para la captura de señales en la frecuencia del satélite.
+* **Tecnologías Relacionadas:** Protocolos de comunicación satelital, Wi-Fi y Bluetooth para la retransmisión de datos.
     
 
-## 5. Integración con Appian (Low-Code)
+## 6. Integración con Appian (Low-Code)
 
-Appian actúa exclusivamente como la capa de visualización (Frontend UI) sobre los datos técnicos. No almacena la telemetría, únicamente consume la API para renderizarla.
+**Appian** actúa exclusivamente como la capa de visualización (Frontend UI) sobre los datos técnicos. No almacena la telemetría, únicamente consume la API para renderizarla.
 
 ### Componentes de Appian:
 
@@ -111,7 +126,7 @@ Appian actúa exclusivamente como la capa de visualización (Frontend UI) sobre 
     - _Grid:_ Tabla detallada con paginación de los últimos eventos.
         
 
-## 6. Configuración e Infraestructura
+## 7. Configuración e Infraestructura
 
 ### Docker y Despliegue
 
@@ -128,9 +143,13 @@ docker run -d \
 
 No se utilizan IPs públicas ni apertura de puertos (Port Forwarding). Se utiliza `cloudflared` (Daemon de Cloudflare Tunnel) que establece una conexión saliente segura hacia la red Edge de Cloudflare, exponiendo el servicio local `localhost:5000` bajo un dominio HTTPS público con certificado SSL gestionado.
 
-## 7. Glosario para Modelos de Lenguaje (LLM context)
+## 8. Glosario para Modelos de Lenguaje (LLM context)
 
 - **TinyGS:** Una red abierta de estaciones terrestres distribuidas para recibir señales LoRa de satélites y sondas.
+
+- **Appian** Appian es una plataforma de desarrollo de software empresarial líder en el mercado de low-code (bajo código) y automatización de procesos.
+
+- **SAIL (Self-Assembling Interface Layer):** Lenguaje de interfaz declarativo propietario de Appian utilizado para construir el dashboard.
     
 - **MQTT (Message Queuing Telemetry Transport):** Protocolo de mensajería ligero tipo "Publicar/Suscribir", ideal para conexiones inestables.
     
@@ -138,5 +157,5 @@ No se utilizan IPs públicas ni apertura de puertos (Port Forwarding). Se utiliz
     
 - **Headless:** Servidor que opera sin monitor, teclado ni ratón, administrado remotamente vía SSH.
     
-- **SAIL (Self-Assembling Interface Layer):** Lenguaje de interfaz declarativo propietario de Appian utilizado para construir el dashboard.
+
     

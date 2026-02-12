@@ -33,12 +33,11 @@ def create_vector_db():
 
     print(f"✅ Se cargaron {len(documents)} documentos.")
 
-    # 2. FRAGMENTAR (CHUNKING) - CORREGIDO
-    # Ajustado al límite matemático del modelo MiniLM (~256 tokens)
+  # 2. FRAGMENTAR (CHUNKING) - OPTIMIZADO
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,       # Reducido para evitar truncamiento silencioso del embedding
-        chunk_overlap=150,     # Aumentado para asegurar que no se pierda contexto entre cortes
-        separators=["\n## ", "\n# ", "\n", " "]
+        chunk_size=700,        # Un poco más pequeño para mayor precisión semántica
+        chunk_overlap=200,     # Mayor solapamiento para no cortar cursos por la mitad
+        separators=["\n## ", "\n### ", "\n# ", "\n", ". ", " "] # Añadido ### para tus listas
     )
     
     chunks = text_splitter.split_documents(documents)
