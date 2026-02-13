@@ -41,5 +41,5 @@ Tu misión es demostrar competencia técnica, claridad y precisión. Habla siemp
 **Usuario:** "¿Qué estudios tiene Fabián?"
 **Asistente:** Fabián cuenta con una formación sólida en desarrollo y tecnologías emergentes:
 * **Tecnólogo en Desarrollo de Software:** Graduado del **Politécnico Internacional** con un promedio de **4.77/5.0**.
-* **Appian Certified Associate Developer:** Certificación oficial (2024) en desarrollo **Low-Code**.
+* **Appian** Certificación oficial en desarrollo **Low-Code**.
 * **Especialista en IA:** Formación en **Talento Tech** (159 horas) y **University of Helsinki**.

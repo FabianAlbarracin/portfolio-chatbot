@@ -5,62 +5,94 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 
-# --- CONFIGURACIÓN ---
 DATA_PATH = "/app/data"
 DB_PATH = "/app/data/chroma_db"
 
+
+def build_metadata_from_path(file_path):
+    normalized = file_path.replace("\\", "/")
+    parts = normalized.split("/")
+
+    metadata = {}
+
+    if "proyectos" in parts:
+        metadata["category"] = "project"
+        index = parts.index("proyectos")
+        metadata["domain"] = parts[index + 1] if len(parts) > index + 1 else "general"
+
+    elif "educacion" in parts:
+        metadata["category"] = "education"
+        metadata["domain"] = "general"
+
+    elif "perfil" in parts:
+        metadata["category"] = "profile"
+        metadata["domain"] = "general"
+
+    else:
+        metadata["category"] = "general"
+        metadata["domain"] = "general"
+
+    metadata["source"] = os.path.basename(file_path).replace(".md", "")
+    return metadata
+
+
 def create_vector_db():
-    print("🔄 [INGESTA] Iniciando proceso...")
+    print("🔄 Iniciando nueva ingesta optimizada...")
 
-    # 1. VERIFICAR ARCHIVOS
     if not os.path.exists(DATA_PATH):
-        print(f"❌ Error: La carpeta {DATA_PATH} no existe.")
+        print(f"❌ Error: {DATA_PATH} no existe.")
         return
 
-    print(f"📂 Buscando archivos Markdown en: {DATA_PATH}")
-    # MEJORA: Forzamos la autodección de UTF-8 para proteger acentos y 'ñ' al cruzar sistemas operativos
     loader = DirectoryLoader(
-        DATA_PATH, 
-        glob="*.md", 
-        loader_cls=TextLoader, 
-        loader_kwargs={'autodetect_encoding': True}
+        DATA_PATH,
+        glob="**/*.md",
+        loader_cls=TextLoader,
+        loader_kwargs={"autodetect_encoding": True},
+        recursive=True,
     )
-    documents = loader.load()
-    
-    if not documents:
-        print("⚠️  No se encontraron archivos .md. Asegúrate de haber copiado tus archivos a data/.")
+
+    raw_documents = loader.load()
+
+    if not raw_documents:
+        print("⚠️ No se encontraron archivos .md.")
         return
 
-    print(f"✅ Se cargaron {len(documents)} documentos.")
+    print(f"📄 Documentos cargados: {len(raw_documents)}")
 
-  # 2. FRAGMENTAR (CHUNKING) - OPTIMIZADO
+    documents = []
+    for doc in raw_documents:
+        metadata = build_metadata_from_path(doc.metadata["source"])
+        doc.metadata.update(metadata)
+        documents.append(doc)
+
+    # 🔥 NUEVO CHUNKING PROFESIONAL
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=700,        # Un poco más pequeño para mayor precisión semántica
-        chunk_overlap=200,     # Mayor solapamiento para no cortar cursos por la mitad
-        separators=["\n## ", "\n### ", "\n# ", "\n", ". ", " "] # Añadido ### para tus listas
+        chunk_size=1100,
+        chunk_overlap=200,
+        separators=["\n## ", "\n### ", "\n# ", "\n\n", "\n", ". "],
     )
-    
+
     chunks = text_splitter.split_documents(documents)
-    print(f"✂️  Documentos divididos en {len(chunks)} fragmentos útiles.")
+    print(f"✂️ Total chunks generados: {len(chunks)}")
 
-    # 3. EMBEDDINGS (TEXTO -> NÚMEROS)
-    print("🧠 Cargando modelo de embeddings local (HuggingFace)...")
-    embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    embedding_model = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    )
 
-    # 4. GUARDAR EN CHROMA
     if os.path.exists(DB_PATH):
-        print("🗑️  Limpiando base de datos anterior...")
+        print("🗑️ Eliminando base anterior...")
         shutil.rmtree(DB_PATH)
 
-    print("💾 Creando y guardando vectores en disco...")
-    
+    print("💾 Creando nueva base vectorial...")
+
     Chroma.from_documents(
         documents=chunks,
         embedding=embedding_model,
-        persist_directory=DB_PATH
+        persist_directory=DB_PATH,
     )
-    
-    print(f"🚀 ¡ÉXITO! Base de datos guardada en: {DB_PATH}")
+
+    print("🚀 Ingesta completada correctamente.")
+
 
 if __name__ == "__main__":
     create_vector_db()
