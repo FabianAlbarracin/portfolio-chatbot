@@ -4,6 +4,8 @@ from langchain_groq import ChatGroq
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_core.messages import HumanMessage, SystemMessage
+from difflib import SequenceMatcher
+
 
 
 class ChatbotRAG:
@@ -30,6 +32,9 @@ class ChatbotRAG:
 
     def normalize(self, text: str):
         return text.lower().strip()
+    
+    def similarity(self, a: str, b: str) -> float:
+        return SequenceMatcher(None, a, b).ratio()
 
     def get_all_sources(self):
         # Obtener lista única de sources
@@ -73,42 +78,92 @@ class ChatbotRAG:
 
             return response.strip()
 
-        # 🔵 2. MATCH EXACTO POR NOMBRE DE SOURCE
-        sources = self.get_all_sources()
+        # 🔵 2. MATCH POR TITLE (PRIORITARIO) + SOURCE
 
-        for source in sources:
-            if source and source.lower() in query_lower:
-                print(f"🎯 Coincidencia directa detectada: {source}")
+        collection = self.db.get()
+        metadatas = collection["metadatas"]
 
-                self.last_project = source  # 🔥 Guardar contexto
+        projects = {}
+
+        for m in metadatas:
+            if m.get("category") == "project":
+                source = m.get("source")
+                title = m.get("title", source)
+
+                if source not in projects:
+                    projects[source] = title
+
+        for source, title in projects.items():
+
+            searchable_name = title.lower()
+            normalized_query = query_lower
+
+            # Match directo por título
+            if searchable_name in normalized_query:
+                print(f"🎯 Coincidencia directa por título: {title}")
+                self.last_project = source
 
                 docs = self.db.get(where={"source": source})
                 context_text = "\n\n".join(docs["documents"])
 
                 return self.generate_answer(context_text, query)
-            
-            # 🔵 2.5 CONTEXTO CONVERSACIONAL LIGERO
-            ambiguous_keywords = [
-                "base de datos",
-                "arquitectura",
-                "como funciona",
-                "infraestructura",
-                "tecnologias",
-                "stack"
-            ]
 
-            if self.last_project and any(k in query_lower for k in ambiguous_keywords):
-                print(f"🧠 Usando contexto conversacional: {self.last_project}")
+            # Fuzzy por título
+            words = normalized_query.split()
+            candidates = [normalized_query]
+            candidates.extend(words)
 
-                docs = self.db.get(where={"source": self.last_project})
+            for i in range(len(words) - 1):
+                candidates.append(words[i] + " " + words[i + 1])
+
+            best_score = 0
+
+            for candidate in candidates:
+                score = self.similarity(searchable_name, candidate)
+                if score > best_score:
+                    best_score = score
+
+            if best_score > 0.75:
+                print(f"🧠 Coincidencia fuzzy por título: {title} (score={best_score:.2f})")
+                self.last_project = source
+
+                docs = self.db.get(where={"source": source})
                 context_text = "\n\n".join(docs["documents"])
 
                 return self.generate_answer(context_text, query)
 
+
+        # 🔵 2.5 CONTEXTO CONVERSACIONAL LIGERO (FUERA DEL LOOP)
+        ambiguous_keywords = [
+            "base de datos",
+            "arquitectura",
+            "como funciona",
+            "infraestructura",
+            "tecnologias",
+            "stack"
+        ]
+
+        if self.last_project and any(k in query_lower for k in ambiguous_keywords):
+            print(f"🧠 Usando contexto conversacional: {self.last_project}")
+
+            docs = self.db.get(where={"source": self.last_project})
+            context_text = "\n\n".join(docs["documents"])
+
+            return self.generate_answer(context_text, query)
+
         # 🔵 3. FALLBACK SEMÁNTICO
         print("🔎 Búsqueda semántica...")
 
-        results = self.db.similarity_search(query, k=6)
+        # Si la intención parece ser hablar de un proyecto específico,
+        # limitar búsqueda solo a categoría project
+        if "hablame" in query_lower or "proyecto" in query_lower:
+            results = self.db.similarity_search(
+                query,
+                k=6,
+                filter={"category": "project"}
+            )
+        else:
+            results = self.db.similarity_search(query, k=6)
 
         if not results:
             return "Esa información no está documentada en el portafolio."
