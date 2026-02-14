@@ -1,4 +1,4 @@
-**Proyecto: Portfolio RAG Assistant**
+**Proyecto: ChatBot Asistente de Portafolio RAG**
 
 ### Tecnologías
 

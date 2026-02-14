@@ -40,27 +40,37 @@ class ChatbotRAG:
 
         query_lower = self.normalize(query)
 
-        # 🔵 1. LISTA DE PROYECTOS (estructural)
+        # 🔵 1. LISTA DE PROYECTOS (estructural enriquecido)
         if "proyectos" in query_lower:
             collection = self.db.get()
             metadatas = collection["metadatas"]
 
-            project_sources = sorted(
-                list(
-                    set(
-                        m["source"]
-                        for m in metadatas
-                        if m.get("category") == "project"
-                    )
-                )
-            )
+            projects = {}
 
-            if not project_sources:
+            for m in metadatas:
+                if m.get("category") == "project":
+                    source = m.get("source")
+                    title = m.get("title", source)
+                    descriptor = m.get("project_type") or m.get("summary", "")
+
+                    if source not in projects:
+                        projects[source] = {
+                            "title": title,
+                            "descriptor": descriptor
+                        }
+
+            if not projects:
                 return "No hay proyectos documentados."
 
-            return "Proyectos documentados:\n\n" + "\n".join(
-                [f"- {p}" for p in project_sources]
-            )
+            response = "Proyectos documentados:\n\n"
+
+            for p in sorted(projects.values(), key=lambda x: x["title"]):
+                if p["descriptor"]:
+                    response += f"- {p['title']}\n  {p['descriptor']}\n\n"
+                else:
+                    response += f"- {p['title']}\n"
+
+            return response.strip()
 
         # 🔵 2. MATCH EXACTO POR NOMBRE DE SOURCE
         sources = self.get_all_sources()

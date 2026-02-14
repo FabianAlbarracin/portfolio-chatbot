@@ -1,4 +1,4 @@
-**Proyecto: tradehub**
+**Proyecto: Tradehub**
 
 ### Tecnologías
 

@@ -1,5 +1,6 @@
 import os
 import shutil
+import re
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -9,7 +10,67 @@ DATA_PATH = "/app/data"
 DB_PATH = "/app/data/chroma_db"
 
 
-def build_metadata_from_path(file_path):
+def extract_project_metadata(content: str):
+    lines = content.split("\n")
+
+    title = None
+    summary = None
+    project_type = None
+
+    # 🔹 Extraer título
+    for line in lines:
+        clean_line = line.strip().replace("*", "")
+        if "Proyecto:" in clean_line:
+            title = clean_line.replace("Proyecto:", "").strip()
+            break
+
+    # 🔹 Extraer sección ### Tipo
+    capture_type = False
+    type_lines = []
+
+    for line in lines:
+        stripped = line.strip()
+
+        if stripped.startswith("### Tipo"):
+            capture_type = True
+            continue
+
+        if capture_type:
+            if stripped.startswith("###"):
+                break
+            if stripped:
+                type_lines.append(stripped)
+
+    if type_lines:
+        project_type = " ".join(type_lines)[:300]
+
+    # 🔹 Fallback summary (primer párrafo después del título)
+    if not project_type:
+        paragraph_lines = []
+        capture = False
+
+        for line in lines:
+            stripped = line.strip()
+
+            if not stripped:
+                if capture:
+                    break
+                continue
+
+            if title and title in line:
+                capture = True
+                continue
+
+            if capture:
+                paragraph_lines.append(stripped)
+
+        if paragraph_lines:
+            summary = " ".join(paragraph_lines[:3])[:300]
+
+    return title, summary, project_type
+
+
+def build_metadata_from_path(file_path, content):
     normalized = file_path.replace("\\", "/")
     parts = normalized.split("/")
 
@@ -33,6 +94,18 @@ def build_metadata_from_path(file_path):
         metadata["domain"] = "general"
 
     metadata["source"] = os.path.basename(file_path).replace(".md", "")
+
+    # 🔥 NUEVO: title + summary
+    title, summary, project_type = extract_project_metadata(content)
+
+    if title:
+        metadata["title"] = title
+
+    if project_type:
+        metadata["project_type"] = project_type
+    elif summary:
+        metadata["summary"] = summary
+
     return metadata
 
 
@@ -61,11 +134,12 @@ def create_vector_db():
 
     documents = []
     for doc in raw_documents:
-        metadata = build_metadata_from_path(doc.metadata["source"])
+        content = doc.page_content
+        metadata = build_metadata_from_path(doc.metadata["source"], content)
         doc.metadata.update(metadata)
         documents.append(doc)
 
-    # 🔥 NUEVO CHUNKING PROFESIONAL
+    # 🔹 Chunking profesional
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1100,
         chunk_overlap=200,
