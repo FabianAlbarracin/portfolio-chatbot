@@ -26,6 +26,7 @@ class ChatbotRAG:
         )
 
         print("✅ Sistema listo.\n")
+        self.last_project = None
 
     def normalize(self, text: str):
         return text.lower().strip()
@@ -76,10 +77,30 @@ class ChatbotRAG:
         sources = self.get_all_sources()
 
         for source in sources:
-            if source.lower() in query_lower:
+            if source and source.lower() in query_lower:
                 print(f"🎯 Coincidencia directa detectada: {source}")
 
+                self.last_project = source  # 🔥 Guardar contexto
+
                 docs = self.db.get(where={"source": source})
+                context_text = "\n\n".join(docs["documents"])
+
+                return self.generate_answer(context_text, query)
+            
+            # 🔵 2.5 CONTEXTO CONVERSACIONAL LIGERO
+            ambiguous_keywords = [
+                "base de datos",
+                "arquitectura",
+                "como funciona",
+                "infraestructura",
+                "tecnologias",
+                "stack"
+            ]
+
+            if self.last_project and any(k in query_lower for k in ambiguous_keywords):
+                print(f"🧠 Usando contexto conversacional: {self.last_project}")
+
+                docs = self.db.get(where={"source": self.last_project})
                 context_text = "\n\n".join(docs["documents"])
 
                 return self.generate_answer(context_text, query)
@@ -91,6 +112,18 @@ class ChatbotRAG:
 
         if not results:
             return "Esa información no está documentada en el portafolio."
+
+        # 🔥 Buscar el primer resultado que sea un proyecto
+        project_source = None
+
+        for doc in results:
+            if doc.metadata.get("category") == "project":
+                project_source = doc.metadata.get("source")
+                break
+
+        if project_source:
+            print(f"🧠 Contexto actualizado por búsqueda semántica: {project_source}")
+            self.last_project = project_source
 
         context_text = "\n\n---\n\n".join(
             [doc.page_content for doc in results]
