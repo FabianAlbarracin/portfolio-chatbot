@@ -35,3 +35,10 @@ env/
 # =========================
 .DS_Store
 Thumbs.db
+
+# =========================
+# ARCHIVOS PERSONALES Y DE PORTAFOLIO
+# =========================
+# Ignorar todos los documentos Markdown con información personal
+data/**/*.md
+data/*.md

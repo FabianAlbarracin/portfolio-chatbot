@@ -1,5 +1,5 @@
 # 1. Usamos una imagen base ligera
-FROM python:3.10-slim
+FROM python:3.12-slim
 
 # 2. Variables de entorno
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -32,4 +32,4 @@ COPY data/ ./data/
 
 # 7. Comando de arranque (será ignorado si usas el docker-compose que te di, 
 # pero sirve de respaldo).
-CMD ["python", "src/main.py"]
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

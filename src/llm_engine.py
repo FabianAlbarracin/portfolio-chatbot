@@ -1,220 +1,88 @@
-import os
-import re
-from langchain_groq import ChatGroq
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
-from langchain_core.messages import HumanMessage, SystemMessage
-from difflib import SequenceMatcher
-
-
+from langchain_core.messages import HumanMessage
+from src.core.session_manager import SessionManager
+from src.services.vector_store import VectorStore
+from src.services.semantic_router import SemanticRouter
+from src.services.llm_generator import LLMGenerator
 
 class ChatbotRAG:
     def __init__(self):
-        print("⚙️ Inicializando motor RAG híbrido profesional...")
+        print("⚙️ Inicializando Arquitectura RAG Orquestada...")
+        self.session_manager = SessionManager()
+        self.vector_store = VectorStore()
+        self.router = SemanticRouter()
+        self.generator = LLMGenerator()
+        print("✅ Motor RAG ensamblado y listo.\n")
 
-        self.llm = ChatGroq(
-            model="llama-3.1-8b-Instant",
-            temperature=0.0,
-            api_key=os.getenv("GROQ_API_KEY"),
+    def get_response(self, session_id: str, query: str) -> str:
+        # 1. Recuperar memoria (Hipocampo)
+        session = self.session_manager.get_session(session_id)
+
+        # 2. Enrutamiento Semántico y de Idioma
+        routing_data = self.router.route_query(
+            query,
+            session["history"],
+            self.vector_store.entity_catalog
         )
+        intent = routing_data.get("intent", "NONE")
+        entities = routing_data.get("entities", [])
 
-        self.embedding_model = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/all-MiniLM-L6-v2"
-        )
+        print(f"🧠 [ROUTER JSON NATIVO] Decisión: {routing_data}")
 
-        self.db = Chroma(
-            persist_directory="/app/data/chroma_db",
-            embedding_function=self.embedding_model,
-        )
+        session["last_detected_lang"] = routing_data.get("detected_language", "es")
 
-        print("✅ Sistema listo.\n")
-        self.last_project = None
+        # ==========================================================
+        # 🛡️ EARLY EXITS (Respuestas Estáticas Controladas)
+        # ==========================================================
+        static_response = None
+        if intent == "BOT_IDENTITY":
+            static_response = "Soy el asistente técnico de IA de este portafolio. Mi conocimiento proviene estrictamente de la documentación técnica, repositorios y archivos proporcionados por el autor original."
+        elif intent == "GREETING":
+            static_response = "Hola, soy el asistente técnico del portafolio. Puedo explicarte a detalle la arquitectura de los proyectos o la experiencia profesional. ¿Por dónde te gustaría empezar?"
+        elif intent == "GIBBERISH":
+            static_response = "No he logrado comprender tu mensaje. Si tienes alguna duda técnica, estaré encantado de ayudarte."
+        elif intent == "PROFANITY":
+            static_response = "Por favor, mantengamos un estándar de comunicación profesional."
+        elif intent == "SYSTEM_CHECK":
+            static_response = "Sistema en línea. Base vectorial y motor RAG operando correctamente."
+        elif intent == "OUT_OF_SCOPE":
+            static_response = "Soy un asistente de alcance estricto. Mi conocimiento se limita a la infraestructura, experiencia y proyectos de este portafolio."
+        elif intent == "LIST_ALL_PROJECTS":
+            proyectos = [
+                data["desc"] for ent, data in self.vector_store.entity_catalog.items()
+                if data.get("type") in ["project", "infrastructure"]
+            ]
+            lista_str = "\n".join([f"- {p}" for p in proyectos])
+            static_response = f"Actualmente, el portafolio documenta los siguientes sistemas e infraestructura:\n{lista_str}\n\n¿Sobre cuál de estos deseas que profundice?"
+        elif intent == "LIST_ALL_EDUCATION":
+            intent = "CATALOGO"
+            entities = ["formacion_academica"]
 
-    def normalize(self, text: str):
-        return text.lower().strip()
-    
-    def similarity(self, a: str, b: str) -> float:
-        return SequenceMatcher(None, a, b).ratio()
+        # Traducción dinámica de la salida temprana
+        if static_response:
+            detected_lang = session.get("last_detected_lang", "es")[:2]
+            if detected_lang != "es":
+                translation_prompt = f"Traduce fielmente este texto al idioma con código '{detected_lang}'. Responde SOLO con la traducción, sin comillas, introducciones ni notas:\n\n{static_response}"
+                static_response = self.generator.llm.invoke([HumanMessage(content=translation_prompt)]).content.strip()
 
-    def get_all_sources(self):
-        # Obtener lista única de sources
-        collection = self.db.get()
-        metadatas = collection["metadatas"]
-        return list(set([m.get("source") for m in metadatas if m.get("source")]))
+            self.session_manager.update_history(session, query, static_response)
+            return static_response
 
-    def get_response(self, query: str) -> str:
+        # ==========================================================
+        # 🔄 FLUJO RAG PROFUNDO
+        # ==========================================================
+        if intent == "CATALOGO" and entities:
+            session["active_entities"] = entities
+        active_entities = session.get("active_entities", [])
 
-        query_lower = self.normalize(query)
+        # 3. Traducción para búsqueda en base de datos
+        query_for_retrieval = routing_data.get("translated_query", query)
 
-        # 🔵 1. LISTA DE PROYECTOS (estructural enriquecido)
-        if "proyectos" in query_lower:
-            collection = self.db.get()
-            metadatas = collection["metadatas"]
+        # 4. Recuperar contexto vectorial (Bodeguero)
+        context_text = self.vector_store.retrieve_context(query_for_retrieval, entities=active_entities)
 
-            projects = {}
+        # 5. Generar respuesta final (Chef Ejecutivo)
+        answer = self.generator.generate(session, context_text, query)
 
-            for m in metadatas:
-                if m.get("category") == "project":
-                    source = m.get("source")
-                    title = m.get("title", source)
-                    descriptor = m.get("project_type") or m.get("summary", "")
-
-                    if source not in projects:
-                        projects[source] = {
-                            "title": title,
-                            "descriptor": descriptor
-                        }
-
-            if not projects:
-                return "No hay proyectos documentados."
-
-            response = "Proyectos documentados:\n\n"
-
-            for p in sorted(projects.values(), key=lambda x: x["title"]):
-                if p["descriptor"]:
-                    response += f"- {p['title']}\n  {p['descriptor']}\n\n"
-                else:
-                    response += f"- {p['title']}\n"
-
-            return response.strip()
-
-        # 🔵 2. MATCH POR TITLE (PRIORITARIO) + SOURCE
-
-        collection = self.db.get()
-        metadatas = collection["metadatas"]
-
-        projects = {}
-
-        for m in metadatas:
-            if m.get("category") == "project":
-                source = m.get("source")
-                title = m.get("title", source)
-
-                if source not in projects:
-                    projects[source] = title
-
-        for source, title in projects.items():
-
-            searchable_name = title.lower()
-            normalized_query = query_lower
-
-            # Match directo por título
-            if searchable_name in normalized_query:
-                print(f"🎯 Coincidencia directa por título: {title}")
-                self.last_project = source
-
-                docs = self.db.get(where={"source": source})
-                context_text = "\n\n".join(docs["documents"])
-
-                return self.generate_answer(context_text, query)
-
-            # Fuzzy por título
-            words = normalized_query.split()
-            candidates = [normalized_query]
-            candidates.extend(words)
-
-            for i in range(len(words) - 1):
-                candidates.append(words[i] + " " + words[i + 1])
-
-            best_score = 0
-
-            for candidate in candidates:
-                score = self.similarity(searchable_name, candidate)
-                if score > best_score:
-                    best_score = score
-
-            if best_score > 0.75:
-                print(f"🧠 Coincidencia fuzzy por título: {title} (score={best_score:.2f})")
-                self.last_project = source
-
-                docs = self.db.get(where={"source": source})
-                context_text = "\n\n".join(docs["documents"])
-
-                return self.generate_answer(context_text, query)
-
-
-        # 🔵 2.5 CONTEXTO CONVERSACIONAL LIGERO (FUERA DEL LOOP)
-        ambiguous_keywords = [
-            "base de datos",
-            "arquitectura",
-            "como funciona",
-            "infraestructura",
-            "tecnologias",
-            "stack"
-        ]
-
-        if self.last_project and any(k in query_lower for k in ambiguous_keywords):
-            print(f"🧠 Usando contexto conversacional: {self.last_project}")
-
-            docs = self.db.get(where={"source": self.last_project})
-            context_text = "\n\n".join(docs["documents"])
-
-            return self.generate_answer(context_text, query)
-
-        # 🔵 3. FALLBACK SEMÁNTICO
-        print("🔎 Búsqueda semántica...")
-
-        # Si la intención parece ser hablar de un proyecto específico,
-        # limitar búsqueda solo a categoría project
-        if "hablame" in query_lower or "proyecto" in query_lower:
-            results = self.db.similarity_search(
-                query,
-                k=6,
-                filter={"category": "project"}
-            )
-        else:
-            results = self.db.similarity_search(query, k=6)
-
-        if not results:
-            return "Esa información no está documentada en el portafolio."
-
-        # 🔥 Buscar el primer resultado que sea un proyecto
-        project_source = None
-
-        for doc in results:
-            if doc.metadata.get("category") == "project":
-                project_source = doc.metadata.get("source")
-                break
-
-        if project_source:
-            print(f"🧠 Contexto actualizado por búsqueda semántica: {project_source}")
-            self.last_project = project_source
-
-        context_text = "\n\n---\n\n".join(
-            [doc.page_content for doc in results]
-        )
-
-        return self.generate_answer(context_text, query)
-
-    def generate_answer(self, context_text: str, query: str):
-
-        system_prompt = """
-        Eres un asistente técnico especializado EXCLUSIVAMENTE en el portafolio profesional de Fabián Albarracín.
-
-        REGLAS:
-        1. Responde SOLO usando información del contexto.
-        2. No inventes información.
-        3. No uses conocimiento externo.
-        4. Responde en tercera persona.
-        5. Sé estructurado y técnico (máximo 5 puntos).
-        """
-
-        final_prompt = f"""
-        <contexto>
-        {context_text}
-        </contexto>
-
-        <pregunta>
-        {query}
-        </pregunta>
-
-        Respuesta:
-        """
-
-        messages = [
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=final_prompt),
-        ]
-
-        response = self.llm.invoke(messages)
-        return response.content.strip()
+        # 6. Actualizar memoria y responder
+        self.session_manager.update_history(session, query, answer)
+        return answer

@@ -1,18 +1,13 @@
 services:
-  chatbot:
+  chatbot_api:
     build: .
-    container_name: chatbot_portfolio
-    restart: unless-stopped
+    container_name: portfolio_chatbot_api
     ports:
-      - "5050:5000"
+      - "8000:8000"
+    env_file:
+      - .env
     volumes:
-      - ./src:/app/src
-      - ./config:/app/config
       - ./data:/app/data
-      - ./.env:/app/.env
-    environment:
-      - PYTHONUNBUFFERED=1
-    # --- CAMBIO AQUÍ ---
-    # En lugar de correr python src/main.py, le decimos que no haga nada.
-    # Esto mantiene el contenedor encendido (Up) para que podamos entrar.
-    command: tail -f /dev/null
+      - ./src:/app/src          # NUEVO: Sincroniza tu código en tiempo real
+      - ./config:/app/config    # NUEVO: Sincroniza tus prompts en tiempo real
+    restart: unless-stopped

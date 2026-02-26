@@ -1,53 +1,35 @@
-import os
-import sys
+from fastapi import FastAPI
 from dotenv import load_dotenv
-from llm_engine import ChatbotRAG
+from fastapi.middleware.cors import CORSMiddleware
+import os
+
+# Importaciones locales (Arquitectura Limpia)
+from src.llm_engine import ChatbotRAG
+from src.models.schemas import ChatRequest
 
 # Cargar variables de entorno
 load_dotenv()
 
-def main():
-    print("--------------------------------------------------")
-    print("🤖 Chatbot RAG de Portafolio (Router Activado) - Iniciando...")
-    print("--------------------------------------------------")
+app = FastAPI()
+bot = ChatbotRAG()
 
-    # Verificar API Key
+# Configuración CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # En producción, cambia "*" por "https://tu-dominio.com"
+    allow_credentials=True,
+    allow_methods=["*"],  # Permite POST, GET, OPTIONS, etc.
+    allow_headers=["*"],
+)
+
+@app.get("/")
+def health():
+    return {"status": "running"}
+
+@app.post("/chat")
+def chat(req: ChatRequest):
     if not os.getenv("GROQ_API_KEY"):
-        print("❌ Error: No se encontró GROQ_API_KEY en las variables de entorno.")
-        print("   Asegúrate de tener el archivo .env configurado correctamente.")
-        return
+        return {"error": "GROQ_API_KEY not configured"}
 
-    try:
-        # Instanciar el motor (Esto carga la DB en memoria, el LLM y el Router)
-        bot = ChatbotRAG()
-    except Exception as e:
-        print(f"❌ Error crítico iniciando el bot: {e}")
-        return
-
-    print("\n💬 Sistema listo. Escribe 'salir' para terminar.")
-    print("--------------------------------------------------")
-
-    while True:
-        try:
-            user_input = input("\nTú: ").strip()
-            
-            if user_input.lower() in ['salir', 'exit', 'quit']:
-                print("👋 ¡Hasta luego!")
-                break
-            
-            if not user_input:
-                continue
-
-            # Obtener respuesta del motor (El método get_response ahora tiene el Router integrado)
-            response = bot.get_response(user_input)
-            
-            print(f"\nBot: {response}")
-
-        except KeyboardInterrupt:
-            print("\n👋 Salida forzada.")
-            break
-        except Exception as e:
-            print(f"❌ Error en la conversación: {e}")
-
-if __name__ == "__main__":
-    main()
+    response = bot.get_response(req.session_id, req.question)
+    return {"answer": response}
