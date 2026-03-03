@@ -15,59 +15,46 @@ class SemanticRouter:
         if not entity_catalog:
             return {"intent": "NONE", "entities": [], "detected_language": "es"}
 
-        menu_options = ""
-        for ent, data in entity_catalog.items():
-            menu_options += f"- [{ent}] (Tipo: {data['type']}): {data['desc']}\n"
-
+        menu_options = "\n".join([f"- [{ent}] ({data['type']}): {data['desc']}" for ent, data in entity_catalog.items()])
         history_str = "\n".join([f"{msg['role']}: {msg['content']}" for msg in history[-2:]]) if history else "Ninguno"
 
         router_prompt = f"""
-        Eres un enrutador multilingüe y analista de intenciones técnico.
-        Tu salida debe ser UNICAMENTE un objeto JSON estrictamente válido.
+        Eres un enrutador analítico. Tu única función es leer la pregunta del usuario y devolver un JSON.
 
-        INSTRUCCIONES DE IDIOMA:
-        1. Analiza la consulta en cualquier idioma (Inglés, Francés, etc.).
-        2. Si la consulta NO está en español, escribe una traducción técnica al español en "translated_query".
-        3. Identifica el código de idioma (es, en, fr, pt) y ponlo en "detected_language".
-
-        FORMATO DE SALIDA (JSON):
+        FORMATO DE SALIDA ESTRICTO:
         {{
-            "intent": "VALOR",
-            "entities": ["id1"],
-            "translated_query": "Traducción al español solo si aplica",
-            "detected_language": "en/es/fr"
+            "intent": "CATALOGO" o "GREETING" o "BOT_IDENTITY" o "OUT_OF_SCOPE",
+            "entities": ["id_del_proyecto"],
+            "detected_language": "es" o "en"
         }}
+
+        CATÁLOGO DISPONIBLE:
+        {menu_options}
 
         HISTORIAL RECIENTE:
         {history_str}
 
-        CATÁLOGO DE DOCUMENTOS (ENTIDADES):
-        {menu_options}
+        PREGUNTA DEL USUARIO: "{query}"
 
-        ETIQUETAS DE SISTEMA:
-        - GREETING: Saludos o presentaciones.
-        - GIBBERISH: Cadenas sin sentido o ruido.
-        - BOT_IDENTITY: Preguntas sobre quién eres o tu arquitectura.
-        - LIST_ALL_PROJECTS: El usuario pide ver TODOS los proyectos.
-        - LIST_ALL_EDUCATION: El usuario pide ver estudios de Fabián.
-
-        REGLAS LÓGICAS:
-        1. Si la intención es sobre el CATÁLOGO, usa "intent": "CATALOGO".
-        2. Si es una ETIQUETA DE SISTEMA, usa el nombre de la etiqueta y entities [].
-        3. SOLICITUDES GLOBALES (CRÍTICO): Usa "LIST_ALL_PROJECTS" SOLAMENTE si piden TODOS los proyectos. Si preguntan por un proyecto ESPECÍFICO, el intent DEBE SER "CATALOGO".
-        4. SEGUIMIENTO (MEMORIA): Mantén el intent "CATALOGO" y usa entidades del HISTORIAL RECIENTE si es seguimiento.
-
-        PREGUNTA: "{query}"
+        REGLAS:
+        1. Si pregunta por un proyecto del catálogo, intent es "CATALOGO" y en entities pon el ID exacto.
+        2. Si saluda, intent es "GREETING".
+        3. Si pregunta quién eres, intent es "BOT_IDENTITY".
+        4. Detecta el idioma en ISO 639-1 (es, en, fr).
         """
 
-        response = self.llm.invoke([SystemMessage(content=router_prompt)])
-        raw_json = response.content.strip()
-
         try:
-            decision = json.loads(raw_json)
+            response = self.llm.invoke([SystemMessage(content=router_prompt)])
+            decision = json.loads(response.content.strip())
+
+            # Validación de seguridad para que ChromaDB no falle con IDs inventados
             valid_entities = [e for e in decision.get("entities", []) if e in entity_catalog]
             decision["entities"] = valid_entities
+
+            # Mantenemos retrocompatibilidad con el orquestador
+            decision["translated_query"] = query
+
             return decision
-        except json.JSONDecodeError:
-            print(f"⚠️ [ROUTER ERROR] Fallo crítico de parseo: {raw_json}")
+        except Exception as e:
+            print(f"⚠️ [ROUTER ERROR] Fallo en clasificación: {e}")
             return {"intent": "NONE", "entities": [], "detected_language": "es"}

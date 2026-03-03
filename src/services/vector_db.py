@@ -43,12 +43,16 @@ class VectorStore:
 
     def retrieve_context(self, query: str, entities: list = []) -> str:
         """Busca en ChromaDB y formatea los bloques de contexto."""
+
+        # Aumentamos agresivamente los valores de 'k' para evitar que se queden fragmentos por fuera
         if not entities:
-            docs = self.db.similarity_search(query, k=5)
+            docs = self.db.similarity_search(query, k=10)
         elif len(entities) == 1:
-            docs = self.db.similarity_search(query, k=5, filter={"entity_name": entities[0]})
+            # k=10 asegura que traiga casi todo el documento de un solo proyecto
+            docs = self.db.similarity_search(query, k=10, filter={"entity_name": entities[0]})
         else:
-            docs = self.db.similarity_search(query, k=6, filter={"entity_name": {"$in": entities}})
+            # k=25 asegura que haya espacio suficiente para los chunks de TODOS los proyectos
+            docs = self.db.similarity_search(query, k=25, filter={"entity_name": {"$in": entities}})
 
         if not docs:
             return "No hay información documentada sobre esta consulta específica."

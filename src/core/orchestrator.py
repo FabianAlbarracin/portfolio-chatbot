@@ -34,6 +34,7 @@ class ChatbotOrchestrator:
 
         # 3. Recuperación Vectorial
         query_for_retrieval = routing_data.get("translated_query", query)
+        if intent == "CATALOGO": query_for_retrieval += " tecnologías arquitectura características"
         context_text = self.vector_store.retrieve_context(query_for_retrieval, entities=active_entities)
 
         # 4. Generación LLM (El modelo asume el control total de la respuesta)
