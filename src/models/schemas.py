@@ -1,9 +1,6 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class ChatRequest(BaseModel):
-    """
-    Esquema de validación para las peticiones entrantes del chat.
-    Garantiza que el frontend siempre envíe un session_id y una question.
-    """
-    session_id: str
+    session_id: Optional[str] = None
     question: str

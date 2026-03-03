@@ -42,3 +42,9 @@ Thumbs.db
 # Ignorar todos los documentos Markdown con información personal
 data/**/*.md
 data/*.md
+
+# =========================
+# LOGS Y RASTREO DE USUARIOS
+# =========================
+*.log
+data/usage_logs.json
