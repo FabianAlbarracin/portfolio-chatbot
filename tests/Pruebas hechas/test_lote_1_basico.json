@@ -1,0 +1,37 @@
+[
+  {
+    "id": "Q01",
+    "category": "perfil",
+    "question": "¿Quién es Fabián Albarracín y cuál es su enfoque?",
+    "expected_keywords": ["Tecnólogo", "Backend", "estructural"],
+    "must_not_contain": ["médico", "abogado"]
+  },
+  {
+    "id": "Q02",
+    "category": "proyecto_tradehub",
+    "question": "¿Qué tecnologías principales utiliza el proyecto Tradehub?",
+    "expected_keywords": ["AppSheet", "Google Sheets", "3FN"],
+    "must_not_contain": ["React Native", "MongoDB", "Docker"]
+  },
+  {
+    "id": "Q03",
+    "category": "proyecto_telemetria",
+    "question": "¿Cómo maneja la base de datos el Sistema de Telemetría Satelital?",
+    "expected_keywords": ["SQLite", "WAL", "RAW"],
+    "must_not_contain": ["Firebase", "PostgreSQL"]
+  },
+  {
+    "id": "Q04",
+    "category": "infraestructura_fabslabs",
+    "question": "¿Cómo se exponen los servicios a internet en FabsLabs de forma segura?",
+    "expected_keywords": ["Cloudflare Tunnel", "Zero Trust"],
+    "must_not_contain": ["Port Forwarding", "abrir puertos"]
+  },
+  {
+    "id": "Q05",
+    "category": "educacion",
+    "question": "¿Fabián tiene alguna certificación en Appian?",
+    "expected_keywords": ["Appian Developer", "2023", "2024", "Low-Code"],
+    "must_not_contain": ["no tiene", "falso"]
+  }
+]

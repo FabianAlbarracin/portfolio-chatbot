@@ -41,25 +41,33 @@ class VectorStore:
                         print(f"   [!] Error leyendo {file}: {e}")
         return catalog
 
-    def retrieve_context(self, query: str, entities: list = []) -> str:
-        """Busca en ChromaDB y formatea los bloques de contexto."""
+    def retrieve_context(self, query: str, entities: list = []) -> tuple:
+        """Busca en ChromaDB y formatea los bloques de contexto, retornando también las fuentes."""
 
-        # Aumentamos agresivamente los valores de 'k' para evitar que se queden fragmentos por fuera
+        # 🔧 TUNING: Reducción drástica de 'k' para evitar el "Context Bleeding"
         if not entities:
-            docs = self.db.similarity_search(query, k=10)
+            # Búsqueda general: Solo los 3 fragmentos más relevantes
+            docs = self.db.similarity_search(query, k=3)
         elif len(entities) == 1:
-            # k=10 asegura que traiga casi todo el documento de un solo proyecto
-            docs = self.db.similarity_search(query, k=10, filter={"entity_name": entities[0]})
+            # Búsqueda específica: Los 4 mejores fragmentos de un solo proyecto
+            docs = self.db.similarity_search(query, k=4, filter={"entity_name": entities[0]})
         else:
-            # k=25 asegura que haya espacio suficiente para los chunks de TODOS los proyectos
-            docs = self.db.similarity_search(query, k=25, filter={"entity_name": {"$in": entities}})
+            # Búsqueda cruzada (Multi-doc): 2 fragmentos por cada proyecto mencionado
+            k_dinamico = len(entities) * 2
+            docs = self.db.similarity_search(query, k=k_dinamico, filter={"entity_name": {"$in": entities}})
 
         if not docs:
-            return "No hay información documentada sobre esta consulta específica."
+            return "No hay información documentada sobre esta consulta específica.", []
 
         context_blocks = []
+        sources_used = set()
+
         for doc in docs:
             entidad = doc.metadata.get("entity_name", "DESCONOCIDO").upper()
+            archivo = doc.metadata.get("source", entidad)
+            nombre_archivo = str(archivo).split("/")[-1]
+            sources_used.add(nombre_archivo)
+
             bloque_etiquetado = (
                 f"=== INICIO CONTEXTO: {entidad} ===\n"
                 f"{doc.page_content}\n"
@@ -67,4 +75,4 @@ class VectorStore:
             )
             context_blocks.append(bloque_etiquetado)
 
-        return "\n\n".join(context_blocks)
+        return "\n\n".join(context_blocks), list(sources_used)
