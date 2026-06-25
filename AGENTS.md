@@ -92,7 +92,7 @@ chatbot_portfolio/
 
 | Variable | Obligatoria | Default | Uso |
 |---|---|---|---|
-| `LITELLM_CHATBOT_KEY` | Si | — | Virtual key del proxy LiteLLM (`http://litellm:4000/v1`) |
+| `GROQ_API_KEY` | Si | — | API key de Groq para el LLM (`base_url=https://api.groq.com/openai/v1`) |
 | `CHATBOT_API_KEY` | Si | — | Protege `POST /admin/refresh` |
 | `ALLOWED_ORIGINS` | No | `localhost:5173` | Origenes CORS (separados por coma) |
 | `UVICORN_RELOAD` | No | `false` | Hot-reload uvicorn para desarrollo |
@@ -191,7 +191,7 @@ busqueda federada, particiones de memoria, inyeccion programatica de idioma,
 
 | Componente | API LangChain | Uso |
 |---|---|---|
-| LLM | `ChatOpenAI(model="llama-8b", base_url="http://litellm:4000/v1")` | Conexion via LiteLLM proxy |
+| LLM | `ChatOpenAI(model="llama-3.3-70b-versatile", base_url="https://api.groq.com/openai/v1")` | Conexion directa a Groq |
 | Embeddings | `HuggingFaceEmbeddings("all-MiniLM-L6-v2")` | Vectorizacion de chunks |
 | Vector Store | `Chroma(persist_directory=..., embedding_function=...)` | Persistencia local SQLite |
 | Retriever | `vector_store.as_retriever(search_kwargs={"k": 6})` | Recuperacion de chunks |
@@ -326,32 +326,22 @@ python tests/evaluator.py
 
 ### Alucinaciones en documentos con listas (cursos, certificaciones, fechas)
 
-**Severidad:** Alta | **Estado:** Sin resolver | **Sesion:** 2026-06-25
+**Severidad:** Alta | **Estado:** Resuelto (T-027) | **Sesion:** 2026-06-25
 
-El LLM (`llama-8b`) tiende a inventar cursos, certificaciones, plataformas y fechas
-cuando se le pide listar elementos de documentos como `formacion_academica.md`.
+El LLM (`llama-8b`, modelo legacy) tendia a inventar cursos, certificaciones, plataformas
+y fechas cuando se le pedia listar elementos de documentos como `formacion_academica.md`.
 Ejemplo: el chatbot invento "Certificacion en Desarrollo de Aplicaciones Web con
 Python: Platzi, 2023", "React Native: Udemy, 2022", etc. — ninguna existe en el
 documento real.
 
-**Causa:** El system prompt tiene reglas anti-alucinacion (Regla 1, 3) pero el
-modelo las ignora al listar items. Tiende a "rellenar" con datos plausibles.
+**Causa:** El system prompt tenia reglas anti-alucinacion (Regla 1, 3) pero el
+modelo de 8B las ignoraba al listar items. Tendia a "rellenar" con datos plausibles.
 
-**Entidades en riesgo:**
-- `formacion_academica` (CRITICO) — cursos, certificaciones, fechas, plataformas
-- `experiencia_profesional` (ALTO) — nombres de empresas, fechas, tecnologias
-- `perfil_personal` (MEDIO) — habilidades, idiomas, anos de experiencia
-- `proyectos` (BAJO) — el stack tecnologico suele ser preciso
-
-**`_check_confidence()` NO detecta este problema** porque solo verifica entity_names
-en sources, no el contenido factual de la respuesta.
-
-**Posibles soluciones (no implementadas):**
-1. Reforzar system prompt con regla anti-invencion de cursos
-2. Aumentar `k` de 6 a 10 en el retriever
-3. Verificacion post-generacion a nivel de tokens (extraer entidades del contexto
-   y verificar que la respuesta no invente ninguna)
-4. Cambiar el modelo via LiteLLM (ej. `llama-70b`, `mistral`, `command-r`)
+**Solucion implementada (T-027):**
+1. Modelo actualizado a `llama-3.3-70b-versatile` (mejor instruction-following)
+2. Regla 9 en system prompt: anti-invencion generica de datos
+3. `_extract_named_items()` + `_check_confidence()` verifica items de la respuesta contra el contexto
+4. Retriever `k=6 → k=8` para mejor cobertura de documentos densos
 
 **Documentacion detallada:** `docs/handoff/session_2026-06-25.md`
 
