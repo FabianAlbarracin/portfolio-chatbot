@@ -52,4 +52,9 @@ data/usage_logs.json
 # =========================
 # REPORTES DE EVALUACION
 # =========================
-tests/reports/.opencode/
+tests/reports/
+
+# =========================
+# HERRAMIENTAS DE DESARROLLO
+# =========================
+.opencode/
