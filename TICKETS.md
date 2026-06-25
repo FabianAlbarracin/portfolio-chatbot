@@ -14,7 +14,7 @@
 | 4 | Observabilidad y operaciones | T-014, T-015, T-017 | [x] |
 | 5 | Testing y evaluacion | T-004, T-011, T-013, T-025, T-026 | [x] |
 | 6 | Open-source readiness | T-022 | [x] |
-| 7 | Verificacion final (criterios CONTRATO) | — | [ ] |
+| 7 | Verificacion final (criterios CONTRATO) | — | [x] |
 
 ---
 

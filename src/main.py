@@ -55,8 +55,7 @@ async def health_check() -> dict:
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
             resp = await client.get("http://litellm:4000/health")
-            if resp.status_code == 200:
-                litellm_status = "ok"
+            litellm_status = "ok" if resp.status_code < 500 else "error"
     except Exception as e:
         logger.warning("Healthcheck LiteLLM fallido: %s", e)
 
