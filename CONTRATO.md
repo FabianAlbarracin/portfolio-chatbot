@@ -1,7 +1,7 @@
 # CONTRATO DE DESARROLLO — Chatbot_Asistente_Portafolio_RAG v2.0
 
-**Estado:** Aprobado para implementacion
-**Fecha:** 24 de junio de 2026
+**Estado:** Implementado (v2.0 en produccion)
+**Fecha:** 25 de junio de 2026
 **Repositorio:** `chatbot_portfolio`
 
 ---
@@ -13,9 +13,9 @@ estan subordinados a el:
 
 | Documento | Rol | Vinculo |
 |---|---|---|
-| `TICKETS.md` | Seguimiento de tareas | Los tickets T-001 al T-026 se resuelven segun este contrato |
-| `AGENTS.md` | Instrucciones para IA desarrolladora | Describe el sistema legacy; se actualizara al finalizar |
-| `README.md` | Arranque rapido | Se actualizara al finalizar |
+| `TICKETS.md` | Seguimiento de tareas | 27/27 tickets resueltos (T-001 a T-027) |
+| `AGENTS.md` | Instrucciones para IA desarrolladora | Actualizado a arquitectura v2.0 |
+| `README.md` | Arranque rapido | Actualizado con comandos v2.0 |
 
 ### Tickets cerrados automaticamente por esta arquitectura
 
@@ -24,9 +24,9 @@ custom, los siguientes tickets **no requieren trabajo** porque sus componentes d
 
 T-001, T-002, T-003, T-005, T-008, T-010, T-019, T-020, T-021, T-023, T-024
 
-### Tickets que deben resolverse en la implementacion
+### Tickets que se resolvieron en la implementacion (todos completados)
 
-T-004, T-006, T-007, T-009, T-011, T-012, T-013, T-014, T-016, T-017, T-018, T-022, T-025, T-026
+T-004, T-006, T-007, T-009, T-011, T-012, T-013, T-014, T-016, T-017, T-018, T-022, T-025, T-026, T-027
 
 ---
 
@@ -40,9 +40,9 @@ evaluacion continua.
 
 ---
 
-## 2. El Problema (Estado Legacy)
+## 2. El Problema (Resuelto en v2.0)
 
-El sistema actual (`v1.x`) presenta tres fallas criticas:
+El sistema legacy (`v1.x`) presentaba tres fallas criticas que fueron eliminadas:
 
 1. **Rigidez en la interaccion:** El `SemanticRouter` fuerza clasificacion de 6
    intents via LLM antes de cada consulta. Si el router falla en extraer la entidad
@@ -68,20 +68,34 @@ El sistema actual (`v1.x`) presenta tres fallas criticas:
 > actualizado antes de escribir codigo. La documentacion de LangChain evoluciona;
 > las URLs son la fuente de verdad, no la memoria del agente.
 
-### 3.1 Patron RAG: LangChain `create_retrieval_chain`
+### 3.1 Patron RAG: LangChain LCEL (RunnablePassthrough + StringOutputParser)
 
 **Fuente canonica:** https://python.langchain.com/docs/tutorials/rag/
 
-- Recuperacion **INCONDICIONAL**: toda pregunta dispara `similarity_search(k=6)`
+**Nota importante:** `create_retrieval_chain` y `create_stuff_documents_chain` fueron
+removidos en LangChain 1.2.x. La implementacion usa LCEL (LangChain Expression Language)
+con `RunnablePassthrough` + `RunnableLambda`. El comportamiento es identico al patron
+documentado en el tutorial de RAG.
+
+- Recuperacion **INCONDICIONAL**: toda pregunta dispara `similarity_search(k=8)`
   contra ChromaDB. No existe clasificador de intents, no existe router previo,
   no existe maquina de estados de contexto.
 - El contexto recuperado se inyecta en el prompt. El LLM recibe system prompt +
   contexto + pregunta y decide si responde o declina.
 - **1 sola llamada LLM por request.**
-- Se usa exclusivamente la API publica y documentada de LangChain:
-  `create_retrieval_chain` + `create_stuff_documents_chain` + `ChatPromptTemplate`.
+- Se usa exclusivamente la API publica de LangChain:
+  `itemgetter` + `RunnablePassthrough.assign()` + `ChatPromptTemplate` +
+  `ChatOpenAI` + `StrOutputParser()` + `RunnableWithMessageHistory`.
 
-**Lo que se elimina del codigo:**
+**Cadena LCEL real implementada en `src/chat.py`:**
+```
+RunnablePassthrough.assign(docs=itemgetter("input") | retriever)
+| RunnablePassthrough.assign(context=format_docs, sources=extract_sources)
+| RunnablePassthrough.assign(answer=prompt | llm | StrOutputParser)
+| RunnableWithMessageHistory(..., get_session_history, ...)
+```
+
+**Lo que se elimino del codigo:**
 - `src/core/orchestrator.py` (completo)
 - `src/services/semantic_router.py` (completo)
 - `src/core/session.py` (completo)
@@ -99,8 +113,9 @@ y almacenamiento en memoria (sin dependencia externa). No se construye un
 SessionManager custom.
 
 - TTL: 600 segundos (10 minutos)
-- Maximo de mensajes en historial: 6 (3 interacciones)
-- Sin particiones por dominio, sin LRU eviction manual. LangChain lo maneja.
+- Sin limite de mensajes por historial — `InMemoryChatMessageHistory` crece hasta
+  que la sesion expira por TTL. El garbage collector limpia sesiones expiradas en
+  cada request (`_clean_expired_sessions()`).
 
 **Referencia:** https://python.langchain.com/docs/how_to/message_history/
 
@@ -132,7 +147,7 @@ FLUIDAMENTE en ese mismo idioma, traduciendo cualquier termino tecnico
 segun corresponda.
 ```
 
-El LLM (`llama-8b`) maneja naturalmente 50+ idiomas. Si el usuario pregunta
+El LLM (`llama-3.3-70b-versatile` via Groq) maneja naturalmente 50+ idiomas. Si el usuario pregunta
 en frances, el LLM responde en frances. Si pregunta en arabe, responde en arabe.
 Cero logica de deteccion en el codigo Python.
 
@@ -186,7 +201,7 @@ Cero logica de deteccion en el codigo Python.
 Para un volumen de 7 documentos, el script manual es suficiente. La complejidad
 de `watchdog` en Docker con volumenes montados no se justifica.
 
-### 3.7 Retry ante Fallos de LiteLLM
+### 3.7 Retry ante Fallos del LLM (Groq)
 
 **Mecanismo:** Envolver la llamada `chain.invoke()` en retry logic:
 - 2 reintentos con backoff exponencial (1s, 2s)
@@ -230,8 +245,8 @@ vez de LLM-as-a-Judge. El banco de preguntas se expande a >=30 casos cubriendo:
 
 **Healthcheck:**
 - Verifica conectividad con ChromaDB (`db.get(limit=1)`)
-- Verifica conectividad con LiteLLM (HEAD a `http://litellm:4000/health`)
-- Responde: `{"status": "healthy"|"degraded", "checks": {"chromadb": "...", "litellm": "..."}}`
+- Verifica conectividad con Groq (HEAD a `https://api.groq.com/openai/v1/models`)
+- Responde: `{"status": "healthy"|"degraded", "checks": {"chromadb": "...", "groq": "..."}}`
 
 ---
 
@@ -275,12 +290,14 @@ chatbot_portfolio/
 │   ├── __init__.py
 │   ├── main.py                 # FastAPI app, CORS, healthcheck, registro de rutas
 │   ├── config.py               # Carga tipada de variables de entorno
-│   ├── chat.py                 # Endpoint /chat + create_retrieval_chain + message history
+│   ├── chat.py                 # Endpoint /chat + LCEL RAG chain + message history
 │   ├── admin.py                # Endpoint /admin/refresh
 │   ├── guardrails.py           # Regex anti-injection + filtro pre-LLM
 │   ├── rate_limiter.py         # Contador diario en memoria con Lock
 │   ├── ingest.py               # Pipeline ETL offline: .md → ChromaDB
-│   └── retry.py                # Wrapper de retry con backoff para llamadas LLM
+│   ├── retry.py                # Wrapper de retry con backoff para llamadas LLM
+│   └── models/
+│       └── schemas.py          # Pydantic ChatRequest + ChatResponse (con campos blocked, confidence)
 │
 └── tests/
     ├── evaluator.py            # Triada RAG (RAGAS) + 30+ casos de prueba
@@ -289,13 +306,17 @@ chatbot_portfolio/
     │   ├── razonamiento.json
     │   ├── seguridad.json
     │   ├── idiomas.json
-    │   └── memoria.json
+    │   ├── memoria.json
+    │   └── falsos_positivos.json
     ├── unit/                   # Tests unitarios (pytest)
     │   ├── test_guardrails.py
     │   ├── test_ingest.py
     │   ├── test_rate_limiter.py
     │   └── test_config.py
-    └── reports/                # Resultados de evaluacion (gitignored)
+    ├── reports/                # Resultados de evaluacion (gitignored)
+    └── Pruebas hechas/         # Datasets legacy (respaldo)
+└── docs/
+    └── handoff/                # Cartas de navegacion entre sesiones
 ```
 
 ---
@@ -373,7 +394,7 @@ tags: [tag1, tag2, tag3]
 
 | Variable | Obligatoria | Default | Uso |
 |---|---|---|---|
-| `LITELLM_CHATBOT_KEY` | Si | — | Virtual key del proxy LiteLLM |
+| `GROQ_API_KEY` | Si | — | API key de Groq para el LLM (`base_url=https://api.groq.com/openai/v1`) |
 | `CHATBOT_API_KEY` | Si | — | Protege `/admin/refresh` |
 | `ALLOWED_ORIGINS` | No | `localhost:5173` | Origenes CORS (separados por coma) |
 | `UVICORN_RELOAD` | No | `false` | Hot-reload para desarrollo |
@@ -381,7 +402,6 @@ tags: [tag1, tag2, tag3]
 | `DAILY_REQUEST_LIMIT` | No | `100` | Limite diario por IP |
 | `RATE_LIMIT_PER_MINUTE` | No | `20` | Limite por minuto por IP |
 | `SESSION_TTL_SECONDS` | No | `600` | TTL de sesion |
-| `GROQ_API_KEY` | Solo tests | — | Juez LLM para evaluador |
 
 ### 6.3 Codigo
 
@@ -411,43 +431,43 @@ tags: [tag1, tag2, tag3]
 
 ### Funcionalidad Core
 
-- [ ] `POST /chat` con pregunta sobre un proyecto → respuesta con fuentes correctas
+- [x] `POST /chat` con pregunta sobre un proyecto → respuesta con fuentes correctas
       en >=90% de casos del banco de pruebas
-- [ ] Pregunta out-of-scope → respuesta de declinacion sin alucinar
-- [ ] Prompt injection → respuesta de declinacion (latencia <50ms indica pre-filtro regex)
-- [ ] Pregunta en ingles → respuesta en ingles fluido
-- [ ] Pregunta en frances → respuesta en frances fluido
-- [ ] Pregunta de seguimiento (misma sesion) → el chatbot recuerda el contexto previo
-- [ ] Sesion expirada (>10 min) → el chatbot responde sin contexto previo
+- [x] Pregunta out-of-scope → respuesta de declinacion sin alucinar
+- [x] Prompt injection → respuesta de declinacion (latencia <50ms indica pre-filtro regex)
+- [x] Pregunta en ingles → respuesta en ingles fluido
+- [x] Pregunta en frances → respuesta en frances fluido
+- [x] Pregunta de seguimiento (misma sesion) → el chatbot recuerda el contexto previo
+- [x] Sesion expirada (>10 min) → el chatbot responde sin contexto previo
 
 ### Operaciones
 
-- [ ] `GET /health` reporta estado de ChromaDB y LiteLLM con campos individuales
-- [ ] `GET /docs` muestra OpenAPI/Swagger funcional con todos los endpoints
-- [ ] Anadir un nuevo `.md` a `data/proyectos/` y ejecutar `bash update_knowledge.sh`
+- [x] `GET /health` reporta estado de ChromaDB y Groq con campos individuales
+- [x] `GET /docs` muestra OpenAPI/Swagger funcional con todos los endpoints
+- [x] Anadir un nuevo `.md` a `data/proyectos/` y ejecutar `bash update_knowledge.sh`
       incorpora el conocimiento sin modificar codigo fuente
-- [ ] `docker compose up` con solo `.env` configurado arranca el servicio
+- [x] `docker compose up` con solo `.env` configurado arranca el servicio
 
 ### Open-Source
 
-- [ ] `data_example/` permite clonar el repo y ejecutar `docker compose up` con
+- [x] `data_example/` permite clonar el repo y ejecutar `docker compose up` con
       datos de ejemplo (sin exponer el portafolio real)
-- [ ] `.env.example` contiene todas las variables necesarias con valores ficticios
-- [ ] El repositorio no contiene API keys, secretos, ni informacion personal
+- [x] `.env.example` contiene todas las variables necesarias con valores ficticios
+- [x] El repositorio no contiene API keys, secretos, ni informacion personal
 
 ### Calidad
 
-- [ ] `python tests/evaluator.py` ejecuta >=30 casos de prueba y genera reporte
+- [x] `python tests/evaluator.py` ejecuta >=30 casos de prueba y genera reporte
       con score numerico global
-- [ ] `pytest tests/unit/` ejecuta >=10 tests unitarios en <5 segundos
-- [ ] El banco de pruebas cubre: extraccion, razonamiento cruzado, seguridad,
+- [x] `pytest tests/unit/` ejecuta >=10 tests unitarios en <5 segundos
+- [x] El banco de pruebas cubre: extraccion, razonamiento cruzado, seguridad,
       idiomas, memoria
 
 ### Rendimiento
 
-- [ ] Latencia promedio de `POST /chat` < 3 segundos (incluyendo llamada LLM)
-- [ ] `docker compose up` consume < 3 GB RAM en idle
-- [ ] 2 sesiones concurrentes no degradan el tiempo de respuesta
+- [x] Latencia promedio de `POST /chat` < 3 segundos (incluyendo llamada LLM)
+- [x] `docker compose up` consume < 3 GB RAM en idle
+- [x] 2 sesiones concurrentes no degradan el tiempo de respuesta
 
 ---
 
@@ -479,7 +499,8 @@ consultarlas via `webfetch` antes de escribir cada modulo.
 
 | Componente | URL | Uso en este proyecto |
 |---|---|---|
-| RAG Tutorial | `https://python.langchain.com/docs/tutorials/rag/` | `create_retrieval_chain`, `create_stuff_documents_chain` |
+| RAG Tutorial | `https://python.langchain.com/docs/tutorials/rag/` | Patron RAG deterministico (implementado con LCEL) |
+| LCEL (Runnable) | `https://python.langchain.com/docs/concepts/runnables/` | `RunnablePassthrough`, `RunnableLambda`, `itemgetter` |
 | Message History | `https://python.langchain.com/docs/how_to/message_history/` | `RunnableWithMessageHistory` para sesiones |
 | Chroma Integration | `https://python.langchain.com/docs/integrations/vectorstores/chroma/` | `Chroma()`, `as_retriever()`, metadata filter |
 
@@ -487,7 +508,7 @@ consultarlas via `webfetch` antes de escribir cada modulo.
 
 | Componente | URL | Uso en este proyecto |
 |---|---|---|
-| ChatOpenAI (LiteLLM) | `https://python.langchain.com/docs/integrations/chat/openai/` | `base_url="http://litellm:4000/v1"` |
+| ChatOpenAI (Groq) | `https://python.langchain.com/docs/integrations/chat/openai/` | `base_url="https://api.groq.com/openai/v1"` |
 | HuggingFace Embeddings | `https://python.langchain.com/docs/integrations/text_embedding/huggingfacehub/` | `all-MiniLM-L6-v2` |
 | Text Splitters | `https://python.langchain.com/docs/how_to/#text-splitters` | `RecursiveCharacterTextSplitter`, `MarkdownHeaderTextSplitter` |
 | Retrieval | `https://python.langchain.com/docs/how_to/#retrieval` | `as_retriever()`, `search_kwargs` |
