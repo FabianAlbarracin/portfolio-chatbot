@@ -1,7 +1,7 @@
 # TICKETS — Portfolio Chatbot API
 
 > Ultima actualizacion: 2026-06-25
-> Abiertos: 0 | Resueltos: 27
+> Abiertos: 1 | Resueltos: 29
 
 ## Hitos de implementacion v2.0
 
@@ -422,3 +422,75 @@ v2.0 — es una limitacion del modelo.
   items presentes en `formacion_academica.md`, sin invenciones. `confidence: "high"`.
 - [x] `_check_confidence()` retorna `"low"` si la respuesta inventa un item no presente.
 - [x] La Regla 9 del system prompt no menciona "cursos" ni "educacion" — es generica.
+
+---
+
+### T-028 [x] Limpiar directorio huerfano `tests/Pruebas hechas/` *(resuelto: directorio ya no existe)*
+
+**Archivo:** `tests/Pruebas hechas/` (directorio vacio, sin archivos)
+
+**Sintoma:** Tras la migracion v2.0, los archivos JSON de prueba se movieron a
+`tests/datasets/`. El directorio `Pruebas hechas/` quedo vacio. No afecta
+funcionamiento pero es ruido en el arbol del proyecto.
+
+**Fix:** `rmdir tests/Pruebas\ hechas/`
+
+**Criterio de aceptacion:** `ls tests/Pruebas\ hechas/` no existe. El evaluador
+ejecuta 6 datasets desde `tests/datasets/` sin error.
+
+---
+
+### T-029 [ ] Sistema de registro de interacciones + tono de audiencia + memoria contextual
+
+**Archivos:** `src/chat.py`, `config/system_role.md`, nuevo `src/interaction_logger.py`
+
+**Sintoma (3 problemas relacionados):**
+
+1. **Sin trazabilidad:** No hay registro de las interacciones reales de los usuarios.
+   Imposible detectar que preguntas fallan, que documentos necesitan mejora, o que
+   patrones de uso existen.
+
+2. **Tono y audiencia no calibrados:** El system prompt no define explícitamente a
+   quien le habla el chatbot. El LLM decide arbitrariamente el nivel de profundidad
+   tecnica. Reclutadores reciben respuestas demasiado tecnicas; devs reciben
+   respuestas demasiado superficiales.
+
+3. **Memoria conversacional subutilizada:** `RunnableWithMessageHistory` ya almacena
+   el historial, pero el system prompt no instruye al LLM a usarlo para resolver
+   referencias ambiguas ("eso", "ese proyecto", "esa tecnologia"). El usuario
+   percibe que el chatbot no recuerda lo que se acaba de hablar.
+
+**Solucion (3 cambios):**
+
+**A. Registro de interacciones** (`src/interaction_logger.py` — nuevo archivo):
+- Tabla SQLite `interactions` con campos: `id`, `session_id`, `question`, `answer`,
+  `sources`, `confidence`, `blocked`, `block_reason`, `timestamp`
+- Escritura asincrona via `threading.Thread` con cola. No bloquea la respuesta al usuario.
+- Endpoint `GET /admin/interactions?limit=50&session_id=...` protegido con `X-API-KEY`
+- Flush periodico cada 10s o cada 50 interacciones acumuladas
+
+**B. System prompt — audiencia, tono y memoria** (`config/system_role.md`):
+- Nueva regla de audiencia: definir que el chatbot habla con evaluadores tecnicos
+  (reclutadores, CTOs, leads de ingenieria). Adaptar profundidad segun la pregunta:
+  si el usuario usa terminos tecnicos → responder con stack y arquitectura. Si
+  pregunta en lenguaje general → responder con impacto y rol.
+- Nueva regla de memoria activa: instruir al LLM a revisar `<historial_conversacion>`
+  cuando el usuario use palabras ambiguas como "eso", "ese proyecto", "esa tecnologia",
+  "lo aplico", "aplica esto".
+- Nueva regla de respuesta progresiva: primer turno conciso (3-4 lineas). Si el
+  usuario quiere mas detalle, profundizar con stack y metodos.
+
+**C. Logging en endpoint** (`src/chat.py`):
+- Despues de `return ChatResponse(...)`, disparar escritura asincrona al
+  `InteractionLogger`. No bloquear la respuesta HTTP.
+
+**Criterio de aceptacion:**
+- `GET /admin/interactions?limit=10` devuelve las 10 interacciones mas recientes
+  con todos los campos (requiere `X-API-KEY`)
+- Sesion: "Que cursos de IA tiene Fabian?" → "Eso lo uso en algun proyecto?" →
+  el chatbot responde en contexto del Bootcamp IA (no pregunta "a que te refieres")
+- Pregunta "Quien es Fabian?" → respuesta en lenguaje de negocio (2-3 lineas,
+  menciona rol y enfoque). Pregunta "Cual es el stack de Tradehub?" → respuesta
+  con tecnologias, arquitectura, metodos de despliegue
+- El registro de interacciones no anade latencia perceptible a `POST /chat`
+  (<50ms adicionales)
