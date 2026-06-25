@@ -48,3 +48,8 @@ data/*.md
 # =========================
 *.log
 data/usage_logs.json
+
+# =========================
+# REPORTES DE EVALUACION
+# =========================
+tests/reports/

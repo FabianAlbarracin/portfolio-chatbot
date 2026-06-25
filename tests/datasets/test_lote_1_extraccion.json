@@ -1,0 +1,18 @@
+[
+  {
+    "id": "EXT-001",
+    "category": "extraccion_directa",
+    "question": "Cuéntame los detalles técnicos del proyecto Tradehub.",
+    "test_type": "standard",
+    "expected_retrieval": ["tradehub.md"],
+    "ideal_answer": "Fabián desarrolló Tradehub con una arquitectura serverless low-code utilizando AppSheet sobre Google Cloud. El stack tecnológico incluye AppSheet Expressions, AppSheet Automation Bots, base de datos en Google Sheets relacional (3FN) con estrategia Soft Delete, Google Drive y control de acceso RBAC. Es un ERP/CRM para gestionar inventario serializado de hardware reacondicionado (Kindles)."
+  },
+  {
+    "id": "EXT-002",
+    "category": "extraccion_directa",
+    "question": "¿Qué experiencia tiene configurando servidores bare-metal o homelabs?",
+    "test_type": "standard",
+    "expected_retrieval": ["FabsLabs.md"],
+    "ideal_answer": "Fabián configuró FabsLabs, una infraestructura homelab on-premise basada en un host físico con Ubuntu Server LTS headless. Utiliza Docker Engine y Docker Compose para desplegar microservicios. La exposición a internet se asegura mediante túneles cifrados de Cloudflare (Cloudflare Tunnel), enrutamiento con Nginx Reverse Proxy, autenticación SSH por llaves y firewall UFW, eliminando la necesidad de un VPS."
+  }
+]

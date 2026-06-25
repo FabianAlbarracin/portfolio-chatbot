@@ -2,12 +2,42 @@ services:
   chatbot_api:
     build: .
     container_name: portfolio_chatbot_api
+    
+    # 🔓 RESTAURADO: Usamos 'ports' para que Nginx (192.168.0.200) y tu laptop local puedan acceder.
+    # La seguridad perimetral ya está garantizada por slowapi en el código Python.
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
+      
     env_file:
       - .env
     volumes:
       - ./data:/app/data
-      - ./src:/app/src          # NUEVO: Sincroniza tu código en tiempo real
-      - ./config:/app/config    # NUEVO: Sincroniza tus prompts en tiempo real
+      # 👇 ESTA LÍNEA: Sincroniza  código en vivo sin reconstruir Docker
+      - ./src:/app/src
+
+    # workers=1 es obligatorio: ChromaDB usa SQLite como backend.
+    # Aumentar workers causaria "database is locked".
+    command: ['sh', '-c', 'exec uvicorn src.main:app --host 0.0.0.0 --port 8000 --workers 1 $([ "$UVICORN_RELOAD" = "true" ] && echo "--reload")']
+      
+    # 1. Healthcheck: Reintenta 3 veces cada 30s. Si falla, marca el contenedor como "unhealthy"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+      
+    # 2. Rotación de Logs de Docker: Máximo 3 archivos de 10MB cada uno
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        
     restart: unless-stopped
+    networks:
+      - homelab_proxy_net
+
+networks:
+  homelab_proxy_net:
+    external: true

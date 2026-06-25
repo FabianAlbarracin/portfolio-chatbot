@@ -1,7 +1,22 @@
 # TICKETS — Portfolio Chatbot API
 
-> Ultima actualizacion: 2026-06-24
-> Abiertos: 26 | En progreso: 0 | Resueltos: 0
+> Ultima actualizacion: 2026-06-25
+> Abiertos: 6 | Resueltos: 20
+
+## Hitos de implementacion v2.0
+
+| Fase | Nombre | Tickets | Estado |
+|------|--------|---------|--------|
+| 0 | Infraestructura y dependencias | T-016, T-018 | [x] |
+| 1 | Demolicion y nueva estructura | — | [x] |
+| 2 | Core RAG | T-006, T-007, T-022 | [~] |
+| 3 | Seguridad y rate limiting | T-009, T-012 | [x] |
+| 4 | Observabilidad y operaciones | T-014, T-015, T-017 | [x] |
+| 5 | Testing y evaluacion | T-004, T-011, T-013, T-025, T-026 | [ ] |
+| 6 | Open-source readiness | T-022 | [ ] |
+| 7 | Verificacion final (criterios CONTRATO) | — | [ ] |
+
+---
 
 ## Leyenda
 
@@ -16,7 +31,7 @@
 
 ## CRITICOS — Causan alucinaciones o silencio ante temas documentados
 
-### T-001 [ ] NONE intent sin manejo produce alucinaciones
+### T-001 [x] NONE intent sin manejo produce alucinaciones *(cerrado por arquitectura v2.0: se elimina SemanticRouter)*
 
 **Archivo:** `src/core/orchestrator.py:64`
 
@@ -30,7 +45,7 @@
 
 ---
 
-### T-002 [ ] Validacion de entidades por string exacto descarta matches correctos
+### T-002 [x] Validacion de entidades por string exacto descarta matches correctos *(cerrado por arquitectura v2.0: retrieval sin filtro de entidad)*
 
 **Archivo:** `src/services/semantic_router.py:69`
 
@@ -44,7 +59,7 @@
 
 ---
 
-### T-003 [ ] Few-shot del router hardcodeado y desacoplado del catalogo real
+### T-003 [x] Few-shot del router hardcodeado y desacoplado del catalogo real *(cerrado por arquitectura v2.0: se elimina SemanticRouter)*
 
 **Archivo:** `src/services/semantic_router.py:47-55`
 
@@ -70,7 +85,7 @@
 
 ---
 
-### T-005 [ ] `translated_query` es codigo muerto — la busqueda vectorial usa la query cruda
+### T-005 [x] `translated_query` es codigo muerto — la busqueda vectorial usa la query cruda *(cerrado por arquitectura v2.0: campo eliminado)*
 
 **Archivo:** `src/services/semantic_router.py:71` + `src/core/orchestrator.py:65`
 
@@ -86,7 +101,7 @@
 
 ## ALTOS — Degradan calidad de interaccion y confiabilidad
 
-### T-006 [ ] Sin reintentos ante fallos de LiteLLM — errores transitorios matan la request
+### T-006 [x] Sin reintentos ante fallos de LiteLLM — errores transitorios matan la request *(resuelto: src/retry.py con backoff exponencial + integrado en chat.py)*
 
 **Archivo:** `src/services/semantic_router.py:74` + `src/services/llm_groq.py:53-58`
 
@@ -100,7 +115,7 @@
 
 ---
 
-### T-007 [ ] `config/system_role.md` leido de disco en cada request
+### T-007 [x] `config/system_role.md` leido de disco en cada request *(resuelto: system prompt cacheado en _build_chain())*
 
 **Archivo:** `src/services/llm_groq.py:20-21`
 
@@ -112,7 +127,7 @@
 
 ---
 
-### T-008 [ ] Respuestas de guardrail indistinguibles de respuestas normales
+### T-008 [x] Respuestas de guardrail indistinguibles de respuestas normales *(cerrado por arquitectura v2.0: campo `blocked` en respuesta)*
 
 **Archivo:** `src/core/orchestrator.py:38` + `src/api/chat_router.py:47-51`
 
@@ -124,7 +139,7 @@
 
 ---
 
-### T-009 [ ] Prompt injection depende exclusivamente del LLM — sin capa programatica de respaldo
+### T-009 [x] Prompt injection depende exclusivamente del LLM — sin capa programatica de respaldo *(resuelto: src/guardrails.py con regex pre-LLM)*
 
 **Archivo:** `src/services/semantic_router.py:44-45`
 
@@ -139,7 +154,7 @@
 
 ---
 
-### T-010 [ ] Doble llamada LLM innecesaria para intents triviales
+### T-010 [x] Doble llamada LLM innecesaria para intents triviales *(cerrado por arquitectura v2.0: 1 sola llamada LLM por request)*
 
 **Archivo:** `src/core/orchestrator.py:23` + `src/services/semantic_router.py:66`
 
@@ -169,7 +184,7 @@ Si el keyword classifier no matchea, se invoca el router LLM normalmente.
 
 ---
 
-### T-012 [ ] Race condition en UsageTracker — posible salto de limite diario
+### T-012 [x] Race condition en UsageTracker — posible salto de limite diario *(resuelto: threading.Lock en src/rate_limiter.py)*
 
 **Archivo:** `src/core/usage_tracker.py:19-50`
 
@@ -197,7 +212,7 @@ No requieren API corriendo — se ejecutan con `pytest`.
 
 ---
 
-### T-014 [ ] Logs con `print()` en vez de `logging` — sin niveles, sin timestamps
+### T-014 [x] Logs con `print()` en vez de `logging` — sin niveles, sin timestamps *(resuelto: modulo logging en todos los archivos + basicConfig en main.py)*
 
 **Archivo:** Todo `src/` usa `print()` (12+ ocurrencias)
 
@@ -209,7 +224,7 @@ No requieren API corriendo — se ejecutan con `pytest`.
 
 ---
 
-### T-015 [ ] Workers=1 bloqueante — solicitudes secuenciales
+### T-015 [x] Workers=1 bloqueante — solicitudes secuenciales *(resuelto: documentado en docker-compose.yml)*
 
 **Archivo:** `docker-compose.yml:19`
 
@@ -226,7 +241,7 @@ No requieren API corriendo — se ejecutan con `pytest`.
 
 ## BAJOS — Deuda tecnica sin impacto inmediato
 
-### T-016 [ ] `--reload` activo en docker-compose — modo desarrollo en produccion
+### T-016 [x] `--reload` activo en docker-compose — modo desarrollo en produccion *(resuelto: UVICORN_RELOAD desde ENV)*
 
 **Archivo:** `docker-compose.yml:19`
 
@@ -238,7 +253,7 @@ No requieren API corriendo — se ejecutan con `pytest`.
 
 ---
 
-### T-017 [ ] Healthcheck solo verifica SQLite — no verifica LiteLLM ni embeddings
+### T-017 [x] Healthcheck solo verifica SQLite — no verifica LiteLLM ni embeddings *(resuelto: verifica ChromaDB SQLite + LiteLLM /health en main.py)*
 
 **Archivo:** `src/main.py:37`
 
@@ -250,7 +265,7 @@ No requieren API corriendo — se ejecutan con `pytest`.
 
 ---
 
-### T-018 [ ] `build-essential` innecesario en imagen Docker
+### T-018 [x] `build-essential` innecesario en imagen Docker *(resuelto: removido del Dockerfile, solo curl)*
 
 **Archivo:** `Dockerfile:9`
 
@@ -262,7 +277,7 @@ No requieren API corriendo — se ejecutan con `pytest`.
 
 ---
 
-### T-019 [ ] `reload_knowledge()` no es atomico — posible race con requests en vuelo
+### T-019 [x] `reload_knowledge()` no es atomico — posible race con requests en vuelo *(cerrado por arquitectura v2.0: se elimina orquestador custom)*
 
 **Archivo:** `src/core/orchestrator.py:118-119`
 
@@ -274,7 +289,7 @@ No requieren API corriendo — se ejecutan con `pytest`.
 
 ---
 
-### T-020 [ ] Idiomas hardcodeados en multiples archivos
+### T-020 [x] Idiomas hardcodeados en multiples archivos *(cerrado por arquitectura v2.0: multi-idioma delegado al LLM)*
 
 **Archivo:** `orchestrator.py:95`, `semantic_router.py:41`, config/system_role.md, evaluator.py
 
@@ -295,7 +310,7 @@ SUPPORTED_LANGS = {
 
 ## PLANTILLAS — Errores en los templates de documentos
 
-### T-021 [ ] Unificar convencion de entity_name entre templates y codigo
+### T-021 [x] Unificar convencion de entity_name entre templates y codigo *(cerrado por arquitectura v2.0: sin `.md` en entity_name)*
 
 **Archivos:** 4 templates de documentos + `semantic_router.py:47-55` + `vector_db.py:46`
 
@@ -328,7 +343,7 @@ Propuesta: unificar **sin `.md`** en todos los nombres de entidad (frontmatter, 
 
 ---
 
-### T-023 [ ] Template de perfil usa `perfil_profesional` pero archivo real es `perfil_personal.md`
+### T-023 [x] Template de perfil usa `perfil_profesional` pero archivo real es `perfil_personal.md` *(cerrado por arquitectura v2.0: unificado en perfil_personal)*
 
 **Archivos:** Template de perfil + `data/perfil/perfil_personal.md` + `semantic_router.py:55`
 
@@ -344,7 +359,7 @@ Propuesta: unificar **sin `.md`** en todos los nombres de entidad (frontmatter, 
 
 Estos tickets pueden activarse durante la ejecucion de los anteriores. No tienen fix definido aun — se refinaran cuando el ticket padre este en progreso.
 
-### T-024 [ ] Definir umbral de fuzzy matching para `normalize_entity_name()`
+### T-024 [x] Definir umbral de fuzzy matching para `normalize_entity_name()` *(cerrado por arquitectura v2.0: eliminada validacion por string exacto)*
 
 **Emerge de:** T-002 + T-003
 **Descripcion:** Si se implementa fuzzy matching, definir umbral de similitud (Levenshtein <= 2) y tests para casos borde: `"tradehub "` (espacio final), `"TradeHub"` (camelCase), `"trdehub"` (typo de 1 letra). Demasiado laxo produce falsos positivos; demasiado estricto reproduce T-002.
