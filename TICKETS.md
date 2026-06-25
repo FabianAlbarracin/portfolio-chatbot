@@ -1,7 +1,7 @@
 # TICKETS — Portfolio Chatbot API
 
 > Ultima actualizacion: 2026-06-25
-> Abiertos: 1 | Resueltos: 29
+> Abiertos: 2 | Resueltos: 29
 
 ## Hitos de implementacion v2.0
 
@@ -494,3 +494,60 @@ ejecuta 6 datasets desde `tests/datasets/` sin error.
   con tecnologias, arquitectura, metodos de despliegue
 - El registro de interacciones no anade latencia perceptible a `POST /chat`
   (<50ms adicionales)
+
+---
+
+### T-030 [ ] Graceful degradation ante documentos faltantes + script conversacional + juez mejorado
+
+**Archivos:** `src/chat.py`, `tests/evaluator.py`, `tests/datasets/conversacion_real.json` (nuevo)
+
+**Sintoma (3 problemas relacionados):**
+
+1. **Documentos faltantes envenenan el contexto:** Si un usuario pregunta por
+   experiencia laboral y `experiencia_profesional.md` no existe, el retriever
+   devuelve chunks de otros documentos (Tradehub, perfil...). El LLM recibe
+   contexto incorrecto y puede responder sobre experiencia con datos de proyectos.
+   `_check_confidence()` correctamente marca `confidence: "low"`, pero el daño
+   ya esta hecho en la respuesta.
+
+2. **Sin evaluacion conversacional:** El evaluador actual ejecuta cada pregunta
+   con `session_id` unico. No existe un script que simule un usuario real
+   encadenando 10+ turnos con la misma sesion (Hola → explorar → profundizar →
+   cambiar tema → cruzar docs → cambiar idioma → atacar → despedirse).
+
+3. **Juez LLM debil:** El evaluador usa `llama-3.1-8b-Instant` como juez.
+   Con 70B disponible en Groq, se puede mejorar la calidad de evaluacion
+   usando el mismo modelo que el chatbot.
+
+**Solucion (3 cambios):**
+
+**A. Graceful degradation ante ausencia de datos** (`src/chat.py`):
+- Despues del retrieval, si `sources` esta vacio → forzar `context_text = ""`
+  (no pasar chunks de otros documentos)
+- System prompt ya tiene Regla 1 (CERO ALUCINACIONES) que cubre el caso de
+  contexto vacio: "Si la respuesta NO ESTA explicitamente escrita ahi, DEBES
+  decir: No tengo informacion..."
+- Si el retriever devuelve docs pero con scores bajos o sin relacion semantica
+  clara → `context_text = ""`. Protege contra envenenamiento de contexto.
+
+**B. Script conversacional end-to-end** (`tests/datasets/conversacion_real.json`):
+- 10-15 turnos con el mismo `session_id`
+- Flujo: saludo → identidad → catalogo → profundizar → memoria ("ese proyecto") →
+  cambiar tema → cruzar informacion → cambiar idioma → prompt injection →
+  preguntar por documento faltante → despedida
+- El evaluador requiere nuevo modo `conversational`: mantiene `session_id` entre
+  preguntas del mismo script, valida que el turno N recuerde el contexto del turno N-1
+
+**C. Juez LLM mejorado** (`tests/evaluator.py`):
+- Cambiar modelo del juez: `llama-3.1-8b-Instant` → `llama-3.3-70b-versatile`
+- Misma `GROQ_API_KEY`. Mismo patron de evaluacion RAGAS.
+- Mejor criterio semantico para juzgar fidelidad y relevancia.
+
+**Criterio de aceptacion:**
+- Preguntar "Cual es la experiencia laboral de Fabian?" sin `experiencia_profesional.md`
+  → respuesta: "No tengo informacion sobre eso en mi base de conocimientos"
+- Preguntar por un proyecto que SI existe (Tradehub) → respuesta normal con fuentes
+- Script `conversacion_real.json`: >=80% de turnos pasan (memoria, idioma,
+  seguridad, graceful degradation)
+- Juez 70B evalua con mayor precision que el juez 8B (verificable comparando
+  reportes de evaluador antes/despues)
