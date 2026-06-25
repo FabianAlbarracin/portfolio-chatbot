@@ -71,7 +71,8 @@ chatbot_portfolio/
     │   ├── razonamiento.json
     │   ├── seguridad.json
     │   ├── idiomas.json
-    │   └── memoria.json
+    │   ├── memoria.json
+    │   └── falsos_positivos.json
     ├── unit/                   # Tests unitarios con pytest
     │   ├── test_guardrails.py
     │   ├── test_ingest.py
@@ -148,9 +149,12 @@ curl http://localhost:8000/docs
 
 ## Arquitectura v2.0
 
-### Patron RAG: LangChain `create_retrieval_chain`
+### Patron RAG: LangChain LCEL (implementacion real)
 
-**Fuente canonica:** `https://python.langchain.com/docs/tutorials/rag/`
+**Nota importante:** `create_retrieval_chain` y `create_stuff_documents_chain` fueron
+removidos en LangChain 1.2.x. La implementacion usa LCEL (LangChain Expression Language)
+con `itemgetter` + `RunnablePassthrough` + `RunnableLambda`. El comportamiento es
+identico al patron documentado en el CONTRATO.
 
 El flujo es deterministico, incondicional, y usa 1 sola llamada LLM por request:
 
@@ -161,25 +165,29 @@ POST /chat
 [guardrails.py] --- pre-filtro regex anti-injection
   |
   v
-[Chromadb.as_retriever(search_kwargs={"k": 6})] --- busqueda SIEMPRE
+[rate_limiter.py] --- verificacion limite diario con Lock
   |
   v
-[create_stuff_documents_chain(llm, prompt)] --- inyecta contexto en template
+[ChromaDB.as_retriever(search_kwargs={"k": 6})] --- busqueda SIEMPRE
   |
   v
-[RunnableWithMessageHistory] --- anade historial de sesion
+[LCEL chain: itemgetter + RunnablePassthrough + StrOutputParser]
+  |-- retriever -> format_docs -> inyecta contexto en prompt
+  |-- RunnableWithMessageHistory -> anade historial de sesion
+  |-- with_retry(chain.invoke) -> 2 reintentos con backoff
   |
   v
-[retry.py] --- 2 reintentos con backoff exponencial
+[_check_confidence()] --- verifica entity_names en answer vs sources
   |
   v
-Respuesta: { session_id, answer, sources, blocked, block_reason }
+ChatResponse: { session_id, answer, sources, blocked, block_reason, confidence }
 ```
 
 **No existe:** SemanticRouter, clasificacion de intents, maquina de estados,
-busqueda federada, particiones de memoria, inyeccion programatica de idioma.
+busqueda federada, particiones de memoria, inyeccion programatica de idioma,
+`create_retrieval_chain`, `create_stuff_documents_chain`.
 
-### Componentes LangChain utilizados
+### Componentes LangChain utilizados (reales)
 
 | Componente | API LangChain | Uso |
 |---|---|---|
@@ -187,10 +195,10 @@ busqueda federada, particiones de memoria, inyeccion programatica de idioma.
 | Embeddings | `HuggingFaceEmbeddings("all-MiniLM-L6-v2")` | Vectorizacion de chunks |
 | Vector Store | `Chroma(persist_directory=..., embedding_function=...)` | Persistencia local SQLite |
 | Retriever | `vector_store.as_retriever(search_kwargs={"k": 6})` | Recuperacion de chunks |
-| Prompt | `ChatPromptTemplate.from_messages([("system", ...), ("human", ...)])` | System + user prompt |
-| Document Chain | `create_stuff_documents_chain(llm, prompt)` | Inyeccion de contexto |
-| RAG Chain | `create_retrieval_chain(retriever, document_chain)` | Orquestacion |
-| History | `RunnableWithMessageHistory(chain, get_session_history, ...)` | Memoria por session_id |
+| Prompt | `ChatPromptTemplate.from_messages([("system", ...), MessagesPlaceholder, ("human", ...)])` | System + historial + user |
+| Chain composition | `itemgetter("input")` + `RunnablePassthrough.assign(...)` + `prompt` + `llm` + `StrOutputParser()` | Composicion declarativa |
+| History | `RunnableWithMessageHistory(chain, get_session_history, input_messages_key, output_messages_key)` | Memoria por session_id |
+| History store | `InMemoryChatMessageHistory` con TTL manual en dict | Almacenamiento en RAM con limpieza por timestamp |
 
 ### Memoria de sesion
 
@@ -292,25 +300,60 @@ ingest sin hot-reload, el servidor usa vectores viejos en RAM.
 ### Tests unitarios
 
 ```bash
-pytest tests/unit/ -v
+# Ejecutar dentro del contenedor Docker (pytest no esta instalado en el host)
+docker exec portfolio_chatbot_api python -m pytest tests/unit/ -v
 ```
 
-- `test_guardrails.py`: pre-filtro regex para todos los patrones de injection
-- `test_ingest.py`: parseo de frontmatter, splitting, enriquecimiento
-- `test_rate_limiter.py`: atomicidad del contador con Lock
-- `test_config.py`: carga de variables de entorno con defaults
+- `test_guardrails.py` (10 tests): pre-filtro regex ingles/espanol + falsos positivos
+- `test_ingest.py` (6 tests): parseo de frontmatter, splitting, enriquecimiento
+- `test_rate_limiter.py` (4 tests): atomicidad del contador con Lock, concurrencia
+- `test_config.py` (9 tests): defaults, paths, env vars
 
 ### Evaluador de calidad (RAGAS)
 
 ```bash
+# Requiere API corriendo en localhost:8000 + GROQ_API_KEY en .env
 python tests/evaluator.py
 ```
 
-- Requiere API corriendo en `localhost:8000`
-- Requiere `GROQ_API_KEY` en `.env`
-- Metricas: Context Relevance, Faithfulness, Answer Relevance
-- >=30 casos de prueba en `tests/datasets/`
+- Metricas RAGAS: Context Relevance, Faithfulness, Answer Relevance
+- 35 casos de prueba en `tests/datasets/` (6 archivos JSON)
 - Reportes en `tests/reports/run_YYYYMMDD_HHMMSS/`
+
+---
+
+## Problemas conocidos
+
+### Alucinaciones en documentos con listas (cursos, certificaciones, fechas)
+
+**Severidad:** Alta | **Estado:** Sin resolver | **Sesion:** 2026-06-25
+
+El LLM (`llama-8b`) tiende a inventar cursos, certificaciones, plataformas y fechas
+cuando se le pide listar elementos de documentos como `formacion_academica.md`.
+Ejemplo: el chatbot invento "Certificacion en Desarrollo de Aplicaciones Web con
+Python: Platzi, 2023", "React Native: Udemy, 2022", etc. — ninguna existe en el
+documento real.
+
+**Causa:** El system prompt tiene reglas anti-alucinacion (Regla 1, 3) pero el
+modelo las ignora al listar items. Tiende a "rellenar" con datos plausibles.
+
+**Entidades en riesgo:**
+- `formacion_academica` (CRITICO) — cursos, certificaciones, fechas, plataformas
+- `experiencia_profesional` (ALTO) — nombres de empresas, fechas, tecnologias
+- `perfil_personal` (MEDIO) — habilidades, idiomas, anos de experiencia
+- `proyectos` (BAJO) — el stack tecnologico suele ser preciso
+
+**`_check_confidence()` NO detecta este problema** porque solo verifica entity_names
+en sources, no el contenido factual de la respuesta.
+
+**Posibles soluciones (no implementadas):**
+1. Reforzar system prompt con regla anti-invencion de cursos
+2. Aumentar `k` de 6 a 10 en el retriever
+3. Verificacion post-generacion a nivel de tokens (extraer entidades del contexto
+   y verificar que la respuesta no invente ninguna)
+4. Cambiar el modelo via LiteLLM (ej. `llama-70b`, `mistral`, `command-r`)
+
+**Documentacion detallada:** `docs/handoff/session_2026-06-25.md`
 
 ---
 
