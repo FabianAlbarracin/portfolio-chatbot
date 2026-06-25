@@ -7,6 +7,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 LITELLM_CHATBOT_KEY: str = os.getenv("LITELLM_CHATBOT_KEY", "")
 CHATBOT_API_KEY: str = os.getenv("CHATBOT_API_KEY", "")
+GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
 ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "localhost:5173")
 UVICORN_RELOAD: bool = os.getenv("UVICORN_RELOAD", "false").lower() == "true"
 LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")

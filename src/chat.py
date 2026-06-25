@@ -1,3 +1,4 @@
+import re
 import time
 import logging
 from operator import itemgetter
@@ -16,7 +17,7 @@ from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.output_parsers import StrOutputParser
 
 from src.config import (
-    LITELLM_CHATBOT_KEY, SESSION_TTL_SECONDS,
+    GROQ_API_KEY, SESSION_TTL_SECONDS,
     CHROMA_PERSIST_DIR, SYSTEM_PROMPT_PATH, DAILY_REQUEST_LIMIT,
 )
 from src.models.schemas import ChatRequest, ChatResponse
@@ -77,9 +78,40 @@ def _extract_sources(docs: list) -> list[str]:
     return sorted(sources)
 
 
-def _check_confidence(answer: str, sources: list[str]) -> str:
+def _extract_named_items(text: str) -> set[str]:
+    pattern = r"(?:^|\n)\s*[-*]\s*\*\*([^*]+)\*\*"
+    matches = re.findall(pattern, text, re.MULTILINE)
+    items: set[str] = set()
+    for match in matches:
+        if isinstance(match, tuple):
+            for item in match:
+                stripped = item.strip()
+                if stripped:
+                    items.add(stripped.lower())
+        elif isinstance(match, str):
+            stripped = match.strip()
+            if stripped:
+                items.add(stripped.lower())
+    return items
+
+
+def _check_confidence(answer: str, sources: list[str], context: str = "") -> str:
     if not sources:
         return "low"
+
+    if context:
+        context_items = _extract_named_items(context)
+        answer_items = _extract_named_items(answer)
+        if answer_items and context_items:
+            invented_items = answer_items - context_items
+            if invented_items:
+                logger.warning(
+                    "Items inventados detectados en respuesta: %s",
+                    invented_items,
+                )
+                return "low"
+            return "high"
+
     answer_lower = answer.lower()
     for source in sources:
         name = source.replace(".md", "").lower()
@@ -105,13 +137,13 @@ def _build_chain() -> RunnableWithMessageHistory:
         _vector_store = _load_vector_store()
 
     llm = ChatOpenAI(
-        model="llama-8b",
+        model="llama-3.3-70b-versatile",
         temperature=0.0,
-        base_url="http://litellm:4000/v1",
-        api_key=LITELLM_CHATBOT_KEY,
+        base_url="https://api.groq.com/openai/v1",
+        api_key=GROQ_API_KEY,
     )
 
-    retriever = _vector_store.as_retriever(search_kwargs={"k": 6})
+    retriever = _vector_store.as_retriever(search_kwargs={"k": 8})
 
     system_prompt = _read_system_prompt()
     system_template = system_prompt + "\n\n<contexto_documentos>\n{context}\n</contexto_documentos>"
@@ -223,7 +255,8 @@ async def chat_endpoint(request: Request, chat_req: ChatRequest) -> ChatResponse
 
         answer_text = result.get("answer", "")
         sources_list = result.get("sources", [])
-        confidence = _check_confidence(answer_text, sources_list)
+        context_text = result.get("context", "")
+        confidence = _check_confidence(answer_text, sources_list, context_text)
 
         return ChatResponse(
             session_id=session_id,

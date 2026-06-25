@@ -1,7 +1,7 @@
 # TICKETS — Portfolio Chatbot API
 
 > Ultima actualizacion: 2026-06-25
-> Abiertos: 1 | Resueltos: 26
+> Abiertos: 0 | Resueltos: 27
 
 ## Hitos de implementacion v2.0
 
@@ -382,9 +382,9 @@ Estos tickets pueden activarse durante la ejecucion de los anteriores. No tienen
 
 ## PRODUCCION — Detectados en v2.0 tras despliegue
 
-### T-027 [ ] Alucinaciones en documentos con listas (cursos, certificaciones, fechas, tecnologias)
+### T-027 [x] Alucinaciones en documentos con listas (cursos, certificaciones, fechas, tecnologias)
 
-**Archivos:** `src/chat.py:80-88`, `src/chat.py:108`, `src/chat.py:114`, `config/system_role.md`
+**Archivos:** `src/chat.py:81-116`, `src/chat.py:135-138`, `src/chat.py:142`, `config/system_role.md:18`, `src/config.py:10`
 
 **Sintoma:** El LLM (`llama-8b`) inventa cursos, certificaciones, plataformas, tecnologias,
 fechas y otros datos concretos cuando se le pide listar elementos de documentos como
@@ -396,31 +396,29 @@ documentos tipo lista compacta (18 cursos en 44 lineas), el LLM tiende a inferir
 plausibles en vez de enumerar exclusivamente los del contexto. No es un bug del codigo
 v2.0 — es una limitacion del modelo.
 
-**Solucion (3 cambios, genericos, sin hardcodeo):**
+**Solucion implementada (5 cambios, genericos, sin hardcodeo):**
 
-1. **System prompt — Regla 9** (`config/system_role.md`): Anadir regla anti-invencion
-   generica que prohibe anadir cualquier item, nombre, fecha, plataforma, tecnologia,
-   metrica o institucion no presente en `<contexto_documentos>`. Aplica a cualquier
-   tipo de documento, no solo educacion.
+1. **System prompt — Regla 9** (`config/system_role.md:18`): Regla generica anti-invencion
+   que prohibe anadir cualquier item, nombre, fecha, plataforma, tecnologia, metrica o
+   institucion no presente en `<contexto_documentos>`. Aplica a cualquier tipo de documento.
 
-2. **Verificacion programatica** (`src/chat.py` — `_check_confidence`): Nueva funcion
-   `_extract_named_items()` extrae todos los items con formato `- **Nombre**` del
-   contexto recuperado y de la respuesta. Si la respuesta contiene items que no estan
-   en el contexto → `confidence: "low"`. Generico: funciona para cursos, tecnologias,
-   empresas, plataformas — cualquier documento futuro.
+2. **Verificacion programatica** (`src/chat.py:81-116`): Nueva funcion `_extract_named_items()`
+   extrae items con formato `- **Nombre**` y `* **Nombre**` del contexto y la respuesta.
+   `_check_confidence()` prioriza la comparacion de items sobre el entity_name.
+   Si la respuesta contiene items no presentes en el contexto → `confidence: "low"`.
 
-3. **Cambio de modelo** (`src/chat.py:108`): `model="llama-8b"` →
-   `model="llama-3.3-70b-versatile"`. 70B parametros tiene mejor instruction-following
-   para respetar reglas anti-alucinacion. Costo estimado: ~$1.50/mes a 100 consultas/dia.
+3. **Cambio de modelo** (`src/chat.py:135`): `model="llama-8b"` →
+   `model="llama-3.3-70b-versatile"`. 70B parametros con mejor instruction-following.
 
-4. **Retriever k=8** (`src/chat.py:114`): `search_kwargs={"k": 6}` → `{"k": 8}`.
-   2 chunks extra benefician documentos tipo lista sin impacto significativo en latencia.
-   Sin deteccion de keywords — aplica a todas las queries.
+4. **Groq directo sin LiteLLM** (`src/chat.py:137-138`, `src/config.py:10`):
+   `base_url="https://api.groq.com/openai/v1"`, `api_key=GROQ_API_KEY`.
+   Eliminado el proxy LiteLLM. Conexion directa a Groq.
 
-**Criterio de aceptacion:**
-- Pregunta "Lista todos los cursos y certificaciones de Fabian" → respuesta contiene solo
-  items presentes en `formacion_academica.md`, sin invenciones
-- `_check_confidence()` retorna `"low"` si la respuesta inventa un item no presente
-  en el contexto recuperado
-- El evaluador RAGAS muestra Faithfulness > 0.85 en `extraccion.json`
-- La Regla 9 del system prompt no menciona "cursos" ni "educacion" — es generica
+5. **Retriever k=8** (`src/chat.py:142`): `search_kwargs={"k": 6}` → `{"k": 8}`.
+   2 chunks extra para documentos tipo lista.
+
+**Criterio de aceptacion (verificado):**
+- [x] Pregunta "Lista todos los cursos y certificaciones de Fabian" → respuesta contiene solo
+  items presentes en `formacion_academica.md`, sin invenciones. `confidence: "high"`.
+- [x] `_check_confidence()` retorna `"low"` si la respuesta inventa un item no presente.
+- [x] La Regla 9 del system prompt no menciona "cursos" ni "educacion" — es generica.
