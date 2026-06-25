@@ -1,7 +1,7 @@
 # TICKETS — Portfolio Chatbot API
 
 > Ultima actualizacion: 2026-06-25
-> Abiertos: 1 | Resueltos: 25
+> Abiertos: 0 | Resueltos: 26
 
 ## Hitos de implementacion v2.0
 
@@ -9,11 +9,11 @@
 |------|--------|---------|--------|
 | 0 | Infraestructura y dependencias | T-016, T-018 | [x] |
 | 1 | Demolicion y nueva estructura | — | [x] |
-| 2 | Core RAG | T-006, T-007, T-022 | [~] |
+| 2 | Core RAG | T-006, T-007, T-022 | [x] |
 | 3 | Seguridad y rate limiting | T-009, T-012 | [x] |
 | 4 | Observabilidad y operaciones | T-014, T-015, T-017 | [x] |
 | 5 | Testing y evaluacion | T-004, T-011, T-013, T-025, T-026 | [x] |
-| 6 | Open-source readiness | T-022 | [ ] |
+| 6 | Open-source readiness | T-022 | [x] |
 | 7 | Verificacion final (criterios CONTRATO) | — | [ ] |
 
 ---
@@ -331,7 +331,7 @@ Propuesta: unificar **sin `.md`** en todos los nombres de entidad (frontmatter, 
 
 ---
 
-### T-022 [ ] Templates mencionan "Llama 3.1" — inconsistente con modelo real
+### T-022 [x] Templates mencionan "Llama 3.1" — inconsistente con modelo real *(resuelto: data_example sin referencias a modelos especificos, README actualizado)*
 
 **Archivos:** Los 4 templates de documentos
 
