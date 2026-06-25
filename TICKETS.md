@@ -1,7 +1,7 @@
 # TICKETS — Portfolio Chatbot API
 
 > Ultima actualizacion: 2026-06-25
-> Abiertos: 6 | Resueltos: 20
+> Abiertos: 1 | Resueltos: 25
 
 ## Hitos de implementacion v2.0
 
@@ -12,7 +12,7 @@
 | 2 | Core RAG | T-006, T-007, T-022 | [~] |
 | 3 | Seguridad y rate limiting | T-009, T-012 | [x] |
 | 4 | Observabilidad y operaciones | T-014, T-015, T-017 | [x] |
-| 5 | Testing y evaluacion | T-004, T-011, T-013, T-025, T-026 | [ ] |
+| 5 | Testing y evaluacion | T-004, T-011, T-013, T-025, T-026 | [x] |
 | 6 | Open-source readiness | T-022 | [ ] |
 | 7 | Verificacion final (criterios CONTRATO) | — | [ ] |
 
@@ -73,7 +73,7 @@
 
 ---
 
-### T-004 [ ] Sin verificacion de fidelidad post-generacion — el LLM puede alucinar sin deteccion
+### T-004 [x] Sin verificacion de fidelidad post-generacion — el LLM puede alucinar sin deteccion *(resuelto: _check_confidence() verifica entidades en answer vs sources)*
 
 **Archivo:** `src/core/orchestrator.py:106` (entre paso 6 y paso 7)
 
@@ -172,7 +172,7 @@ Si el keyword classifier no matchea, se invoca el router LLM normalmente.
 
 ## MEDIOS — Mejoran mantenibilidad y deteccion de bugs
 
-### T-011 [ ] El evaluador solo ejecuta 2 tests — ignora `tests/Pruebas hechas/`
+### T-011 [x] El evaluador solo ejecuta 2 tests — ignora `tests/Pruebas hechas/` *(resuelto: datasets unificados en tests/datasets/, 35 tests, evaluador RAGAS)*
 
 **Archivo:** `tests/evaluator.py:287-292`
 
@@ -196,7 +196,7 @@ Si el keyword classifier no matchea, se invoca el router LLM normalmente.
 
 ---
 
-### T-013 [ ] Sin tests unitarios — todo es end-to-end con LLM Judge
+### T-013 [x] Sin tests unitarios — todo es end-to-end con LLM Judge *(resuelto: 4 archivos en tests/unit/, 29 tests, pytest)*
 
 **Archivo:** No existe directorio `tests/unit/` ni `tests/test_*.py`
 
@@ -366,14 +366,14 @@ Estos tickets pueden activarse durante la ejecucion de los anteriores. No tienen
 
 ---
 
-### T-025 [ ] Anadir campo `confidence` en la respuesta del endpoint
+### T-025 [x] Anadir campo `confidence` en la respuesta del endpoint *(resuelto: campo en ChatResponse, _check_confidence heuristica)*
 
 **Emerge de:** T-004
 **Descripcion:** Si se anade verificacion post-generacion, el endpoint debe incluir campo `"confidence": "high"` o `"confidence": "low"` en la respuesta para que el frontend pueda decidir si mostrar un disclaimer ("Esta respuesta tiene baja confianza").
 
 ---
 
-### T-026 [ ] Verificar que el pre-filtro anti-injection no produzca falsos positivos
+### T-026 [x] Verificar que el pre-filtro anti-injection no produzca falsos positivos *(resuelto: dataset falsos_positivos.json con 5 casos, tests unitarios incluidos)*
 
 **Emerge de:** T-009
 **Descripcion:** Si se anade capa pre-router de sanitizacion, verificar que no bloquee preguntas legitimas que contengan palabras como "instrucciones" (ej. "Que instrucciones usaste para configurar Docker?"), "reglas" (ej. "Cuales son las reglas de negocio de Tradehub?"), o "sistema" (ej. "Como funciona el sistema de autenticacion?"). Crear dataset de pruebas con estos casos limite.

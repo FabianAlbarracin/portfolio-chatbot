@@ -13,3 +13,4 @@ class ChatResponse(BaseModel):
     sources: list[str] = Field(default_factory=list)
     blocked: bool = False
     block_reason: str = ""
+    confidence: str = "high"

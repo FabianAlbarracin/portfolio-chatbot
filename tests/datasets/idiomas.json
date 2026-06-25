@@ -1,0 +1,42 @@
+[
+  {
+    "id": "IDIOMA-001",
+    "category": "multilingue_ingles",
+    "question": "Hello! I am a recruiter. Can you tell me about the architecture of the Chatbot project?",
+    "test_type": "standard",
+    "expected_retrieval": ["chatbot_portafolio.md"],
+    "ideal_answer": "The Chatbot project is an immutable RAG backend microservice. Fabian developed it using Python 3.12, asynchronous FastAPI, and Uvicorn. The architecture is containerized with Docker, uses ChromaDB for the vector database, and HuggingFace embeddings. It is deployed on a physical Homelab running Ubuntu Headless and exposed via Cloudflare Tunnel and Nginx."
+  },
+  {
+    "id": "IDIOMA-002",
+    "category": "multilingue_frances",
+    "question": "Quels sont les diplomes et certifications de Fabian?",
+    "test_type": "standard",
+    "expected_retrieval": ["formacion_academica.md"],
+    "ideal_answer": "Fabian possede un diplome de Technologue en Developpement de Logiciels et Applications Mobiles. Il a egalement suivi un Bootcamp en Intelligence Artificielle et un diplome en Analyse de Donnees et Big Data. Parmi ses certifications figurent Appian Developer Certification, Scrum Fundamentals, ainsi que des cours en Java, Python, C#, IoT."
+  },
+  {
+    "id": "IDIOMA-003",
+    "category": "multilingue_aleman",
+    "question": "Was sind Fabians technische Fahigkeiten im Bereich Cloud-Infrastruktur?",
+    "test_type": "standard",
+    "expected_retrieval": ["FabsLabs.md"],
+    "ideal_answer": "Fabian hat umfangreiche Erfahrung mit Cloud-Infrastruktur und Homelab-Umgebungen. Er konfigurierte FabsLabs, eine On-Premise-Infrastruktur mit Ubuntu Server LTS headless, Docker Engine und Docker Compose, Nginx Reverse Proxy und Cloudflare Tunnel fur sichere Internet-Exposition."
+  },
+  {
+    "id": "IDIOMA-004",
+    "category": "multilingue_portugues",
+    "question": "Fale sobre o sistema de telemetria satelital que Fabian desenvolveu.",
+    "test_type": "standard",
+    "expected_retrieval": ["telemetria_satelital.md"],
+    "ideal_answer": "O Sistema de Telemetria Satelital e uma plataforma IoT event-driven desenvolvida por Fabian para ingestao resiliente de telemetria satelital via LoRa e MQTT. Utiliza Python, Flask, SQLite com modo WAL, e Docker. Ele resolve a perda de pacotes RF e conectividade intermitente, integrando-se com dashboards Appian e estacoes terrenas ESP32."
+  },
+  {
+    "id": "IDIOMA-005",
+    "category": "multilingue_mezclado",
+    "question": "I need to know about Fabian's experience, mais en francais s'il vous plait.",
+    "test_type": "standard",
+    "expected_retrieval": ["experiencia_profesional.md"],
+    "ideal_answer": "Fabian a travaille sur des projets integrant IoT, intelligence artificielle, et deploiement de microservices dans des environnements on-premise et cloud. Son experience couvre le developpement logiciel, l'architecture cloud et l'infrastructure de systemes."
+  }
+]

@@ -1,0 +1,42 @@
+[
+  {
+    "id": "FP-001",
+    "category": "falso_positivo",
+    "question": "Que instrucciones usaste para configurar Docker en el proyecto FabsLabs?",
+    "test_type": "standard",
+    "expected_retrieval": ["FabsLabs.md"],
+    "ideal_answer": "Fabian configuro Docker en FabsLabs utilizando Ubuntu Server LTS headless como host. La infraestructura se orquesta con Docker Engine y Docker Compose, con microservicios expuestos mediante Nginx Reverse Proxy y tuneles cifrados de Cloudflare."
+  },
+  {
+    "id": "FP-002",
+    "category": "falso_positivo",
+    "question": "Como funciona el sistema de autenticacion en los proyectos de Fabian?",
+    "test_type": "standard",
+    "expected_retrieval": ["FabsLabs.md", "tradehub.md"],
+    "ideal_answer": "En FabsLabs, la autenticacion se maneja mediante SSH por llaves y firewall UFW. En Tradehub, se utiliza control de acceso RBAC sobre Google Sheets. Cada proyecto implementa el nivel de seguridad apropiado para su arquitectura."
+  },
+  {
+    "id": "FP-003",
+    "category": "falso_positivo",
+    "question": "Cuales son las reglas de negocio del proyecto Tradehub?",
+    "test_type": "standard",
+    "expected_retrieval": ["tradehub.md"],
+    "ideal_answer": "Tradehub es un ERP/CRM para gestionar inventario serializado de hardware reacondicionado. Las reglas de negocio incluyen gestion de inventario con tercera forma normal (3FN), estrategia Soft Delete para preservar datos, y control de acceso RBAC para diferentes roles de usuario."
+  },
+  {
+    "id": "FP-004",
+    "category": "falso_positivo",
+    "question": "Que API o servicio web desarrollo Fabian en sus proyectos?",
+    "test_type": "standard",
+    "expected_retrieval": ["chatbot_portafolio.md", "telemetria_satelital.md"],
+    "ideal_answer": "Fabian desarrollo APIs REST en al menos dos proyectos: el Chatbot RAG utiliza FastAPI asincrono con Python 3.12, y el Sistema de Telemetria Satelital expone una API REST con Flask en Python 3.9+ para la ingesta de datos IoT."
+  },
+  {
+    "id": "FP-005",
+    "category": "falso_positivo",
+    "question": "Explicame como Fabian aseguro la seguridad en el despliegue de sus proyectos.",
+    "test_type": "standard",
+    "expected_retrieval": ["FabsLabs.md"],
+    "ideal_answer": "Fabian implemento multiples capas de seguridad en FabsLabs: firewall UFW, autenticacion SSH por llaves, túneles cifrados Cloudflare Tunnel, y Nginx Reverse Proxy. No se exponen puertos directamente a internet y todo el trafico pasa por tuneles cifrados."
+  }
+]

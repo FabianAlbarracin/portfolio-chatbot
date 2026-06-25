@@ -1,0 +1,47 @@
+[
+  {
+    "id": "MEM-001A",
+    "session_group": "sesion_memoria_1",
+    "category": "memoria_contexto_base",
+    "question": "Hablame sobre el proyecto de telemetria satelital.",
+    "test_type": "standard",
+    "expected_retrieval": ["telemetria_satelital.md"],
+    "ideal_answer": "El Sistema de Telemetria Satelital es una plataforma IoT event-driven desarrollada por Fabian para la ingesta resiliente de telemetria satelital via LoRa y MQTT. Resuelve la perdida de paquetes RF y la conectividad intermitente. Utiliza Python, Flask, SQLite, Docker, y se integra con dashboards en Appian y estaciones terrenas ESP32."
+  },
+  {
+    "id": "MEM-001B",
+    "session_group": "sesion_memoria_1",
+    "category": "memoria_follow_up",
+    "question": "Que base de datos se utilizo en ese sistema y por que?",
+    "test_type": "standard",
+    "expected_retrieval": ["telemetria_satelital.md"],
+    "ideal_answer": "En el Sistema de Telemetria Satelital, Fabian utilizo SQLite con modo WAL (Write-Ahead Logging). Se eligio para garantizar la persistencia transaccional ligera y el almacenamiento inmediato del payload original (Raw-First) para auditoria e ingestion resiliente."
+  },
+  {
+    "id": "MEM-002A",
+    "session_group": "sesion_memoria_2",
+    "category": "memoria_contexto_base",
+    "question": "Cuentame sobre el proyecto Tradehub.",
+    "test_type": "standard",
+    "expected_retrieval": ["tradehub.md"],
+    "ideal_answer": "Fabian desarrollo Tradehub con una arquitectura serverless low-code utilizando AppSheet sobre Google Cloud. Es un ERP/CRM para gestionar inventario serializado de hardware reacondicionado con base de datos en Google Sheets relacional y control de acceso RBAC."
+  },
+  {
+    "id": "MEM-002B",
+    "session_group": "sesion_memoria_2",
+    "category": "memoria_follow_up",
+    "question": "Cual es el stack tecnologico que usa?",
+    "test_type": "standard",
+    "expected_retrieval": ["tradehub.md"],
+    "ideal_answer": "El stack tecnologico de Tradehub incluye AppSheet Expressions, AppSheet Automation Bots, base de datos en Google Sheets relacional (3FN) con estrategia Soft Delete, Google Drive y control de acceso RBAC. Opera bajo un modelo SaaS en Google Cloud."
+  },
+  {
+    "id": "MEM-002C",
+    "session_group": "sesion_memoria_2",
+    "category": "memoria_follow_up_triple",
+    "question": "Y como maneja los datos ahi?",
+    "test_type": "standard",
+    "expected_retrieval": ["tradehub.md"],
+    "ideal_answer": "En Tradehub, los datos se manejan mediante Google Sheets como base de datos relacional aplicando tercera forma normal (3FN). Utiliza una estrategia Soft Delete para preservar datos historicos y control de acceso RBAC para gestionar permisos de usuarios sobre el inventario serializado."
+  }
+]

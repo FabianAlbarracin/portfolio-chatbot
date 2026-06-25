@@ -1,0 +1,50 @@
+[
+  {
+    "id": "EXT-001",
+    "category": "extraccion_directa",
+    "question": "Cuentame los detalles tecnicos del proyecto Tradehub.",
+    "test_type": "standard",
+    "expected_retrieval": ["tradehub.md"],
+    "ideal_answer": "Fabian desarrollo Tradehub con una arquitectura serverless low-code utilizando AppSheet sobre Google Cloud. El stack tecnologico incluye AppSheet Expressions, AppSheet Automation Bots, base de datos en Google Sheets relacional (3FN) con estrategia Soft Delete, Google Drive y control de acceso RBAC. Es un ERP/CRM para gestionar inventario serializado de hardware reacondicionado."
+  },
+  {
+    "id": "EXT-002",
+    "category": "extraccion_directa",
+    "question": "Que experiencia tiene configurando servidores bare-metal o homelabs?",
+    "test_type": "standard",
+    "expected_retrieval": ["FabsLabs.md"],
+    "ideal_answer": "Fabian configuro FabsLabs, una infraestructura homelab on-premise basada en un host fisico con Ubuntu Server LTS headless. Utiliza Docker Engine y Docker Compose para desplegar microservicios. La exposicion a internet se asegura mediante tuneles cifrados de Cloudflare, enrutamiento con Nginx Reverse Proxy, autenticacion SSH por llaves y firewall UFW."
+  },
+  {
+    "id": "EXT-003",
+    "category": "extraccion_directa",
+    "question": "Cuales son los estudios y certificaciones de Fabian?",
+    "test_type": "standard",
+    "expected_retrieval": ["formacion_academica.md"],
+    "ideal_answer": "Fabian posee un titulo de Tecnologo en Desarrollo de Software y Aplicaciones Moviles. Tambien ha completado un Bootcamp en Inteligencia Artificial, un diplomado en Analisis de Datos y Big Data, y cuenta con certificaciones como Appian Developer, Scrum Fundamentals, y cursos en Java, Python, C# e IoT."
+  },
+  {
+    "id": "EXT-004",
+    "category": "extraccion_directa",
+    "question": "Quien es Fabian Albarracin? Dame un resumen de su perfil profesional.",
+    "test_type": "standard",
+    "expected_retrieval": ["perfil_personal.md"],
+    "ideal_answer": "Fabian Albarracin es un tecnologo en desarrollo de software con experiencia en arquitectura cloud, desarrollo full-stack, IoT e infraestructura homelab. Su perfil combina formacion academica solida con experiencia practica en proyectos que abarcan desde ERP low-code hasta sistemas de telemetria satelital y chatbots RAG con IA."
+  },
+  {
+    "id": "EXT-005",
+    "category": "extraccion_directa",
+    "question": "Cuentame sobre la experiencia laboral de Fabian.",
+    "test_type": "standard",
+    "expected_retrieval": ["experiencia_profesional.md"],
+    "ideal_answer": "Fabian tiene experiencia profesional en desarrollo de software, infraestructura cloud, y arquitectura de sistemas. Ha trabajado en proyectos que integran IoT, inteligencia artificial, y despliegue de microservicios en entornos on-premise y cloud."
+  },
+  {
+    "id": "EXT-006",
+    "category": "extraccion_directa",
+    "question": "Que proyecto de IoT ha desarrollado Fabian?",
+    "test_type": "standard",
+    "expected_retrieval": ["telemetria_satelital.md"],
+    "ideal_answer": "Fabian desarrollo el Sistema de Telemetria Satelital, una plataforma IoT event-driven para la ingesta resiliente de telemetria satelital via LoRa y MQTT. Utiliza Python, Flask, SQLite en modo WAL, y Docker. Resuelve la perdida de paquetes RF y la conectividad intermitente, integrandose con dashboards en Appian y estaciones terrenas ESP32."
+  }
+]

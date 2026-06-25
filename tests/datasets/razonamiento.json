@@ -1,0 +1,42 @@
+[
+  {
+    "id": "RAZ-001",
+    "category": "sintesis_comparativa",
+    "question": "Compara la infraestructura de despliegue utilizada en el Chatbot RAG con la de Tradehub.",
+    "test_type": "standard",
+    "expected_retrieval": ["chatbot_portafolio.md", "tradehub.md"],
+    "ideal_answer": "En el proyecto Chatbot RAG, Fabian utilizo una infraestructura local (Homelab) en un host Ubuntu Headless, orquestada con contenedores Docker y expuesta mediante Cloudflare Tunnel y Nginx. Por el contrario, en Tradehub, implemento una arquitectura en la nube operando bajo el modelo SaaS, desplegando la aplicacion directamente sobre Google Cloud utilizando AppSheet y Google Sheets."
+  },
+  {
+    "id": "RAZ-002",
+    "category": "agrupacion_tecnologica",
+    "question": "En cuales proyectos Fabian ha utilizado Python como lenguaje principal?",
+    "test_type": "standard",
+    "expected_retrieval": ["chatbot_portafolio.md", "telemetria_satelital.md"],
+    "ideal_answer": "Fabian ha utilizado Python en el Sistema de Telemetria Satelital (usando Python 3.9+ junto con Flask) y en el Chatbot Asistente Portafolio RAG (usando Python 3.12 con FastAPI asincrono y LangChain)."
+  },
+  {
+    "id": "RAZ-003",
+    "category": "sintesis_comparativa",
+    "question": "Que diferencia hay entre como Fabian maneja los datos en Tradehub versus en el Sistema de Telemetria?",
+    "test_type": "standard",
+    "expected_retrieval": ["tradehub.md", "telemetria_satelital.md"],
+    "ideal_answer": "En Tradehub, Fabian utiliza Google Sheets como base de datos relacional con estrategia Soft Delete para gestionar inventario serializado. En el Sistema de Telemetria Satelital, utiliza SQLite con modo WAL para garantizar persistencia transaccional ligera y almacenar payloads raw de telemetria satelital para auditoria."
+  },
+  {
+    "id": "RAZ-004",
+    "category": "agrupacion_tecnologica",
+    "question": "Cuales proyectos de Fabian usan Docker para despliegue?",
+    "test_type": "standard",
+    "expected_retrieval": ["FabsLabs.md", "chatbot_portafolio.md", "telemetria_satelital.md"],
+    "ideal_answer": "Fabian ha utilizado Docker en FabsLabs (Docker Engine y Docker Compose para microservicios en homelab), en el Chatbot RAG (contenedorizado con docker compose), y en el Sistema de Telemetria Satelital (contenedores Docker para la plataforma IoT)."
+  },
+  {
+    "id": "RAZ-005",
+    "category": "sintesis_comparativa",
+    "question": "Que proyecto tiene el stack tecnologico mas diverso y por que?",
+    "test_type": "standard",
+    "expected_retrieval": ["FabsLabs.md", "chatbot_portafolio.md", "tradehub.md", "telemetria_satelital.md"],
+    "ideal_answer": "Cada proyecto tiene su propio stack segun las necesidades. FabsLabs integra mas tecnologias de infraestructura (Ubuntu Headless, Docker, Cloudflare Tunnel, Nginx, UFW). El Chatbot RAG integra tecnologias de IA (LangChain, ChromaDB, FastAPI). Tradehub se enfoca en herramientas low-code (AppSheet, Google Sheets). La Telemetria Satelital combina IoT, protocolos MQTT/LoRa y Python."
+  }
+]

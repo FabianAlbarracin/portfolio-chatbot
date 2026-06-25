@@ -77,6 +77,17 @@ def _extract_sources(docs: list) -> list[str]:
     return sorted(sources)
 
 
+def _check_confidence(answer: str, sources: list[str]) -> str:
+    if not sources:
+        return "low"
+    answer_lower = answer.lower()
+    for source in sources:
+        name = source.replace(".md", "").lower()
+        if name in answer_lower:
+            return "high"
+    return "low"
+
+
 def _load_vector_store() -> Chroma:
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
@@ -181,6 +192,7 @@ async def chat_endpoint(request: Request, chat_req: ChatRequest) -> ChatResponse
             answer="Tu pregunta es muy extensa. Maximo 500 caracteres.",
             blocked=True,
             block_reason="input_too_long",
+            confidence="low",
         )
 
     blocked, reason = check_injection(chat_req.question)
@@ -190,6 +202,7 @@ async def chat_endpoint(request: Request, chat_req: ChatRequest) -> ChatResponse
             answer="Solo estoy autorizado para hablar sobre el portafolio tecnico y profesional de Fabian Albarracin.",
             blocked=True,
             block_reason=reason,
+            confidence="low",
         )
 
     if not check_and_update(client_ip, daily_limit=DAILY_REQUEST_LIMIT):
@@ -198,6 +211,7 @@ async def chat_endpoint(request: Request, chat_req: ChatRequest) -> ChatResponse
             answer="Has alcanzado el limite de consultas diarias. Intenta de nuevo manana.",
             blocked=True,
             block_reason="daily_limit",
+            confidence="low",
         )
 
     try:
@@ -207,11 +221,16 @@ async def chat_endpoint(request: Request, chat_req: ChatRequest) -> ChatResponse
             config={"configurable": {"session_id": session_id}},
         )
 
+        answer_text = result.get("answer", "")
+        sources_list = result.get("sources", [])
+        confidence = _check_confidence(answer_text, sources_list)
+
         return ChatResponse(
             session_id=session_id,
-            answer=result.get("answer", ""),
-            sources=result.get("sources", []),
+            answer=answer_text,
+            sources=sources_list,
             blocked=False,
+            confidence=confidence,
         )
 
     except Exception as e:
@@ -222,4 +241,5 @@ async def chat_endpoint(request: Request, chat_req: ChatRequest) -> ChatResponse
             sources=[],
             blocked=True,
             block_reason="llm_unavailable",
+            confidence="low",
         )
